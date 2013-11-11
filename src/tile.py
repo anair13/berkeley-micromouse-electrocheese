@@ -6,6 +6,11 @@ class Tile(object):
     """
 
     def __init__(self, walls=[False, False, False, False]):
+        """
+        >>> t = Tile()
+        >>> t.hasWall(RIGHT)
+        False
+        """
         self.__walls = walls
 
     def setWall(self, direction, val):
