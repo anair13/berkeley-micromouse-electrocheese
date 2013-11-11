@@ -1,8 +1,9 @@
+from Constants import RIGHT, UP, LEFT, DOWN
+
 class Tile(object):
     """
     Tile object for Maze class
     """
-    RIGHT, UP, LEFT, DOWN = 0, 1, 2, 3
 
     def __init__(self, walls=[False, False, False, False]):
         self.__walls = walls
@@ -11,10 +12,10 @@ class Tile(object):
         """Sets whether there is a wall on a certain tile
         WARNING: This does not update the neighboring tile.  Use setTile() as supplised by Maze.py
         >>> t = Tile()
-        >>> t.setWall(Tile.LEFT, True)
-        >>> t.hasWall(Tile.LEFT)
+        >>> t.setWall(LEFT, True)
+        >>> t.hasWall(LEFT)
         True
-        >>> t.hasWall(Tile.RIGHT)
+        >>> t.hasWall(RIGHT)
         False
         """
         self.__walls[direction] = val
@@ -22,10 +23,10 @@ class Tile(object):
     def hasWall(self, direction):
         """Check if whether there is a wall in a certain direction
         >>> t = Tile()
-        >>> t.hasWall(Tile.UP)
+        >>> t.hasWall(UP)
         False
-        >>> t.setWall(Tile.UP, True)
-        >>> t.hasWall(Tile.UP)
+        >>> t.setWall(UP, True)
+        >>> t.hasWall(UP)
         True
         """
         return self.__walls[direction]
