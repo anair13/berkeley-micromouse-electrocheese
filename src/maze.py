@@ -1,4 +1,4 @@
-from constants import RIGHT, UP, LEFT, DOWN, getOpposite
+from constants import RIGHT, UP, LEFT, DOWN, getOpposite, getDelta
 from grid import Grid
 from tile import Tile
 
@@ -47,6 +47,8 @@ class Maze(object):
     def getTileDelta(self, x, y, direction, spaces=1):
         """Get tile <spaces> away in direction from (x, y)
         >>> m = Maze()
+        >>> m.getTileDelta(3, 4, RIGHT).hasWall(RIGHT)
+        False
         >>> m.setTile(4, 4, RIGHT, True)
         >>> m.getTileDelta(3, 4, RIGHT).hasWall(RIGHT)
         True
@@ -59,6 +61,11 @@ class Maze(object):
         >>> m.getTileDelta(4, 2, DOWN, 2).hasWall(RIGHT)
         True
         """
-        assert True, "TODO: Test for out of bound walls"
-        # TODO: This entire function
-        return self._grid[x][y]
+        # TODO: Assert for out-of-bound errors
+        assert True, ""
+
+        delta = getDelta(direction)
+        dx, dy = delta
+        dx *= 2
+        dy *= 2
+        return self._grid[x + dx][y + dy]
