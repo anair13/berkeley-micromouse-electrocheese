@@ -10,13 +10,18 @@ class Maze(object):
     height = 16
     
     def __init__(self):
+        """
+        >>> m = Maze()
+        >>> m.hasWall(4, 4, RIGHT)
+        False
+        """
         self._grid = Grid(Maze.width, Maze.height, Tile())
 
     def setTile(self, x, y, direction, val):
         """Sets the wall state of a tile (x, y) in <direction>
         >>> m = Maze()
         >>> m.hasWall(4, 4, RIGHT)
-        False
+        False # What the fuck is wrong with this test?!
         >>> m.setTile(4, 4, RIGHT, True)
         >>> m.hasWall(4, 4, RIGHT)
         True
