@@ -41,6 +41,24 @@ class Maze(object):
                 fill = lambda direction: self.setTile(i, j, direction, True)
                 [fill(d) for d in [RIGHT, UP, LEFT, DOWN]]
 
+    def printMaze(self):
+        """Print entire maze
+
+        I'm not writing a test for this"""
+        self.fillWithWalls() # temporary
+        for j in range(0, Maze.height):
+            s = "_"
+            for i in range(0, Maze.width):
+                if self.hasWall(i, j, UP):
+                    s += "_"
+                else:
+                    s += " "
+                s += "_"
+            print(s)
+            print("| " * Maze.width + "|")
+        print("_" * (Maze.width * 2 + 1))
+            
+
     def setTile(self, x, y, direction, val):
         """Sets the wall state of a tile (x, y) in <direction>
         >>> m = Maze()
@@ -99,3 +117,7 @@ class Maze(object):
         assert y + dy >= 0, "Y coordinate less than 0"
         assert y + dy < self.height, "Y coordinate greater than height"
         return self._grid[x + dx][y + dy]
+
+# Temporary
+m = Maze()
+m.printMaze()
