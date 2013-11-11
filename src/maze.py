@@ -25,13 +25,15 @@ class Maze(object):
         >>> m.setTile(4, 4, RIGHT, True)
         >>> m.hasWall(4, 4, RIGHT)
         True
+        >>> m.hasWall(6, 6, RIGHT)
+        False
         >>> m.hasWall(5, 4, LEFT) # Also updates neighboring wall
         True
         """
         assert x < Maze.width, "X coordinate larger than grid width"
         assert y < Maze.height, "Y coordinate larger than grid height"
         self._grid[x][y].setWall(direction, val)
-        self.getTileDelta(x, y, direction, 2).setWall(getOpposite(direction), val)
+        self.getTileDelta(x, y, direction).setWall(getOpposite(direction), val)
 
     def hasWall(self, x, y, direction):
         """Returns whether there is a wall at (x, y) in <direction>
@@ -58,7 +60,7 @@ class Maze(object):
         True
         >>> m.getTileDelta(6, 4, LEFT, 2).hasWall(RIGHT)
         True
-        >>> m.getTileDelta(4, 2, DOWN, 2).hasWall(RIGHT)
+        >>> m.getTileDelta(4, 6, DOWN, 2).hasWall(RIGHT)
         True
         """
         # TODO: Assert for out-of-bound errors
@@ -66,6 +68,6 @@ class Maze(object):
 
         delta = getDelta(direction)
         dx, dy = delta
-        dx *= 2
-        dy *= 2
+        dx *= spaces
+        dy *= spaces
         return self._grid[x + dx][y + dy]
