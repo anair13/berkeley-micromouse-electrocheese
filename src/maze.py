@@ -63,11 +63,12 @@ class Maze(object):
         >>> m.getTileDelta(4, 6, DOWN, 2).hasWall(RIGHT)
         True
         """
-        # TODO: Assert for out-of-bound errors
-        assert True, ""
-
         delta = getDelta(direction)
         dx, dy = delta
         dx *= spaces
         dy *= spaces
+        assert x + dx >= 0, "X coordinate less than 0"
+        assert x + dx < self.width, "X coordinate greater than width"
+        assert y + dy >= 0, "Y coordinate less than 0"
+        assert y + dy < self.height, "Y coordinate greater than height"
         return self._grid[x + dx][y + dy]
