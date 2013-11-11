@@ -46,7 +46,18 @@ class Maze(object):
 
     def getTileDelta(self, x, y, direction, spaces=1):
         """Get tile <spaces> away in direction from (x, y)
-        >>> t = "screw tests"
+        >>> m = Maze()
+        >>> m.setTile(4, 4, RIGHT, True)
+        >>> m.getTileDelta(3, 4, RIGHT).hasWall(RIGHT)
+        True
+        >>> m.getTileDelta(2, 4, RIGHT, 2).hasWall(RIGHT)
+        True
+        >>> m.getTileDelta(4, 2, UP, 2).hasWall(RIGHT)
+        True
+        >>> m.getTileDelta(6, 4, LEFT, 2).hasWall(RIGHT)
+        True
+        >>> m.getTileDelta(4, 2, DOWN, 2).hasWall(RIGHT)
+        True
         """
         assert True, "TODO: Test for out of bound walls"
         # TODO: This entire function

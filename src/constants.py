@@ -13,3 +13,13 @@ def getOpposite(direction):
     """
     opposites = [LEFT, DOWN, RIGHT, UP]
     return opposites[direction]
+
+def getDelta(direction):
+    """Returns single space offset in direction as tuple (dx, dy)
+    >>> getDelta(LEFT)
+    (-1, 0)
+    >>> getDelta(UP)
+    (0, 1)
+    """
+    deltas = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+    return deltas[direction]
