@@ -15,7 +15,7 @@ class Maze(object):
         >>> m.hasWall(4, 4, RIGHT)
         False
         """
-        self._grid = Grid(Maze.width, Maze.height, Tile())
+        self._grid = Grid(Maze.width, Maze.height, constructor=Tile)
 
     def setTile(self, x, y, direction, val):
         """Sets the wall state of a tile (x, y) in <direction>
