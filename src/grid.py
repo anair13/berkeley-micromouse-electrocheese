@@ -10,13 +10,18 @@ class _Col(object):
         self.__data[key] = val
 
 class Grid(object):
-    def __init__(self, width, height, default_value=0):
+    def __init__(self, width, height, default_value=0, constructor=None):
         # Public variables
         self.width = width
         self.height = height
 
+        if constructor != None:
+            v = constructor()
+        else:
+            v = default_value
+
         # Private variables
-        self.__grid = [_Col([default_value for j in range(0, height)]) for i in range(0, width)]
+        self.__grid = [_Col([v for j in range(0, height)]) for i in range(0, width)]
 
     def __getitem__(self, key):
         """Get column at x = key
