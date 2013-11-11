@@ -31,7 +31,7 @@ class Maze(object):
         assert x < Maze.width, "X coordinate larger than grid width"
         assert y < Maze.height, "Y coordinate larger than grid height"
         self._grid[x][y].setWall(direction, val)
-        self.getTileDelta(x, y, direction).setWall(getOpposite(direction), val)
+        self.getTileDelta(x, y, direction, 2).setWall(getOpposite(direction), val)
 
     def hasWall(self, x, y, direction):
         """Returns whether there is a wall at (x, y) in <direction>
