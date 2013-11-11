@@ -21,7 +21,7 @@ class Maze(object):
         """Sets the wall state of a tile (x, y) in <direction>
         >>> m = Maze()
         >>> m.hasWall(4, 4, RIGHT)
-        False # What the fuck is wrong with this test?!
+        False
         >>> m.setTile(4, 4, RIGHT, True)
         >>> m.hasWall(4, 4, RIGHT)
         True

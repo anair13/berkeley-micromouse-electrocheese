@@ -5,13 +5,16 @@ class Tile(object):
     Tile object for Maze class
     """
 
-    def __init__(self, walls=[False, False, False, False]):
+    def __init__(self, walls=None):
         """
         >>> t = Tile()
         >>> t.hasWall(RIGHT)
         False
         """
-        self.__walls = walls
+        if walls == None:
+            self.__walls = [False, False, False, False]
+        else:
+            self.__walls = walls
 
     def setWall(self, direction, val):
         """Sets whether there is a wall on a certain tile
