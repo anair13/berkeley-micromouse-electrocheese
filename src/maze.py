@@ -17,6 +17,30 @@ class Maze(object):
         """
         self._grid = Grid(Maze.width, Maze.height, constructor=Tile)
 
+    def generateMaze(self):
+        # TODO
+        """Generate maze using Prim's algorithm""" 
+        pass
+
+    def fillWithWalls(self):
+        """Set every wall on every tile
+        >>> m = Maze()
+        >>> m.hasWall(4, 4, RIGHT)
+        False
+        >>> m.hasWall(6, 6, RIGHT)
+        False
+        >>> m.fillWithWalls()
+        >>> m.hasWall(4, 4, RIGHT)
+        True
+        >>> m.hasWall(6, 6, RIGHT)
+        True
+        """
+        # TODO: Make this efficient
+        for i in range(0, Maze.width):
+            for j in range(0, Maze.height):
+                fill = lambda direction: self.setTile(i, j, direction, True)
+                [fill(d) for d in [RIGHT, UP, LEFT, DOWN]]
+
     def setTile(self, x, y, direction, val):
         """Sets the wall state of a tile (x, y) in <direction>
         >>> m = Maze()
@@ -33,7 +57,10 @@ class Maze(object):
         assert x < Maze.width, "X coordinate larger than grid width"
         assert y < Maze.height, "Y coordinate larger than grid height"
         self._grid[x][y].setWall(direction, val)
-        self.getTileDelta(x, y, direction).setWall(getOpposite(direction), val)
+        try:
+            self.getTileDelta(x, y, direction).setWall(getOpposite(direction), val)
+        except AssertionError:
+            pass
 
     def hasWall(self, x, y, direction):
         """Returns whether there is a wall at (x, y) in <direction>
