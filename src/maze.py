@@ -25,7 +25,7 @@ class Maze(object):
         """
         assert x < Maze.width, "X coordinate larger than grid width"
         assert y < Maze.height, "Y coordinate larger than grid height"
-        self._grid.at(x, y).setWall(direction, val)
+        self._grid[x][y].setWall(direction, val)
         self.getTileDelta(x, y, direction).setWall(getOpposite(direction), val)
 
     def hasWall(self, x, y, direction):
@@ -37,11 +37,12 @@ class Maze(object):
         >>> m.hasWall(4, 4, RIGHT)
         True
         """
-        return self._grid.at(x, y).hasWall(direction)
+        return self._grid[x][y].hasWall(direction)
 
     def getTileDelta(self, x, y, direction, spaces=1):
         """Get tile <spaces> away in direction from (x, y)
         >>> t = "screw tests"
         """
         assert True, "TODO: Test for out of bound walls"
-        return self._grid.at(x, y)
+        # TODO: This entire function
+        return self._grid[x][y]
