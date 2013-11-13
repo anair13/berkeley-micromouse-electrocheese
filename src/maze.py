@@ -20,6 +20,31 @@ class Maze(object):
     def generateMaze(self):
         # TODO
         """Generate maze using Prim's algorithm""" 
+        import random
+        center_x = Maze.width // 2
+        center_y = Maze.height // 2
+        center_tile = self.getTile(center_x, center_y)
+        cells = [self.getTile(center_x, center_y)]
+        walls = [(center_x, center_y, direction) for direction in [RIGHT, UP, LEFT, DOWN]]
+        while walls != []:
+            wall = walls[random.randint(0, len(walls) - 1)]
+            x, y = wall[0], wall[1]
+            direction = wall[2]
+            try:
+                newTile = self.getTileDelta(x, y, direction)
+                if newTile not in cells:
+                    nx, ny = x + getDelta(direction)[0], y + getDelta(direction)[1]
+                    self.setTile(x, y, direction, False)
+                    cells.append(newTile)
+                    for d in [RIGHT, UP, LEFT, DOWN]:
+                        newWall = (nx, ny, d)
+                        if newWall not in walls:
+                            walls.append(newWall)
+                else:
+                    walls.remove(wall)
+            except AssertionError:
+                walls.remove(wall)
+                
         pass
 
     def fillWithWalls(self):
@@ -45,7 +70,6 @@ class Maze(object):
         """Print entire maze
 
         I'm not writing a test for this"""
-        self.fillWithWalls() # temporary
         for j in range(0, Maze.height):
             s = "_"
             for i in range(0, Maze.width):
@@ -57,7 +81,11 @@ class Maze(object):
             print(s)
             print("| " * Maze.width + "|")
         print("_" * (Maze.width * 2 + 1))
-            
+
+    def getTile(self, x, y):
+        """Get tile ID"""
+        # TODO: Tests
+        return self._grid[x][y]
 
     def setTile(self, x, y, direction, val):
         """Sets the wall state of a tile (x, y) in <direction>
@@ -120,4 +148,6 @@ class Maze(object):
 
 # Temporary
 m = Maze()
+m.fillWithWalls()
+m.generateMaze()
 m.printMaze()
