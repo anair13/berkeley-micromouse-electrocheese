@@ -9,32 +9,37 @@ class Pair {
 };
 
 /*
-2 : encoder R
+2 : encoder L
 3 : bump B
-4 : encoder R
-5 : output R
-6 : output R
-7 : encoder L
-8 : encoder L
-9 : output L
-10: output L
-11: bump L
-12: bump R
+4 : encoder L
+5 : output L
+6 : output L
+7 : encoder R
+8 : encoder R
+9 : output R
+10: output R
+11: bump R
+12: bump L
 */
 
 //// Pins
 // Digital
-const char encoderL1 = 7;
-const char encoderL2 = 8;
-const char encoderR1 = 2;
-const char encoderR2 = 4;
-const char bumpL = 11;
-const char bumpR = 12;
+const char encoderR1 = 7;
+const char encoderR2 = 8;
+const char encoderL1 = 2;
+const char encoderL2 = 4;
+const char bumpR = 11;
+const char bumpL = 12;
 const char bumpB = 3;
-const char outputL1 = 9;
-const char outputL2 = 10;
-const char outputR1 = 5;
-const char outputR2 = 6;
+const char outputR1 = 9;
+const char outputR2 = 10;
+const char outputL1 = 5;
+const char outputL2 = 6;
+
+// Analog
+const char sensorF = 0;
+const char sensorL = 1;
+const char sensorR = 2;
 
 void setup() {
   pinMode(encoderL1, INPUT);
@@ -55,6 +60,10 @@ void setup() {
 void loop() {
   moveBothForward(100, 200);
   delay(1000);
+}
+
+void getSensorError() {
+  analogRead(
 }
 
 void moveBothForward(int ticks, float voltage) {  
