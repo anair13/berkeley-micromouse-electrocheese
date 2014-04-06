@@ -75,11 +75,11 @@ void getSensorError() {
 }
 
 float distSensorVtoCM(float voltage) {
-  return 18.666666666666666666666666666667 / voltage;
+  return -15.1645 + 39.3177 / voltage + 2.91422 * voltage;
 }
 
 float distSensorCMtoV(float cm) {
-  return 18.666666666666666666666666666667 / cm;
+  return -0.0556334 - 72.2653 / pow(cm, 2) + 30.2105 / cm + 0.00162233 * cm;
 }
 
 void moveBothForward(int ticks, float voltage) {  
