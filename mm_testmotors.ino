@@ -63,7 +63,23 @@ void loop() {
 }
 
 void getSensorError() {
-  analogRead(
+  
+  /*
+  Voltage to distance graph corresponds approx. to:
+  V = 18.666666666666666666666666666667 / x
+  where V is volts and x is in cm
+  */
+  
+  analogRead(sensorL);
+  analogRead(sensorR);
+}
+
+float distSensorVtoCM(float voltage) {
+  return 18.666666666666666666666666666667 / voltage;
+}
+
+float distSensorCMtoV(float cm) {
+  return 18.666666666666666666666666666667 / cm;
 }
 
 void moveBothForward(int ticks, float voltage) {  
