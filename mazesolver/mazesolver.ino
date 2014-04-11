@@ -1,4 +1,5 @@
 #include <robot.h>
+#include <QueueList.h>
 
 byte grid[16][16];
 // represents number of squares it will take robot to reach location
@@ -17,19 +18,19 @@ Robot destination(5, 5, 5);
 
 /* Updates grid and actions from wall knowledge and robot position */
 void solve() {
-  expand(r.x, r.y, r.d, 0);
+  expand(r.x, r.y, r.t, 0);
   traverse(destination.x, destination.y);
 }
 
 /* Recursively flood-fill the board */
 void expand(int x, int y, int d, int value) {
   grid[y][x] = value;
-  w = wall[y][x]
+  byte w = wall[y][x];
   for (int dir = 0; dir < 4; dir++) {
     if (d == dir + 2 || d == dir - 2) {
       continue; // same direction that came in
     }
-    if (w & (1 << dir)) { // there is a wall in this direction
+    if (w & (8 >> dir)) { // there is a wall in this direction
       continue;
     }
     int dx = (-2 * (dir / 2) + 1) * (dir % 2);
@@ -40,13 +41,13 @@ void expand(int x, int y, int d, int value) {
 
 /* Recursively updates actions */
 void traverse(int x, int y) {
-  w = wall[y][x]
+  byte w = wall[y][x];
   int best_dir;
   int best_x;
   int best_y;
   int lowest_score = 1000;
   for (int dir = 0; dir < 4; dir++) {
-    if (w & (1 << dir)) { // there is a wall in this direction
+    if (w & (8 >> dir)) { // there is a wall in this direction
       continue;
     }
     int dx = (-2 * (dir / 2) + 1) * (dir % 2);
@@ -60,7 +61,7 @@ void traverse(int x, int y) {
       best_dir = dir;
       best_x = x + dx;
       best_y = y + dy;
-      lower_score = n;
+      lowest_score = n;
     }      
   }
   actions[y][x] = best_dir;
@@ -68,7 +69,14 @@ void traverse(int x, int y) {
 }
 
 void setup() {
+  for (int i = 0; i < 16; i++) {
+    wall[0][i] += 8; // B1000;
+    wall[i][0] += 1; // B0001;
+    wall[16 - 1][i] += 2; // B0010;
+    wall[i][16 - 1] += 4; // B0100;
+  }
   
+  solve();
 }
 
 void loop() {
