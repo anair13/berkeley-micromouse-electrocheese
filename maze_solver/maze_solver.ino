@@ -1,25 +1,21 @@
-import java.awt.Point;
-import java.util.Queue;
-import java.util.LinkedList;
+#include <QueueList.h>
 
-int SIZE = 16;
-
-int grid[][] = new int[SIZE][SIZE];
+byte grid[16][16];
 // represents number of squares it will take robot to reach location
 // eg. robot is located where grid = 0
 
-int wall[][] = new int[SIZE][SIZE];
+byte wall[16][16];
 // *N* wall contains 4-bit integers 
 // WOE N = 1 if a wall to the north, 0 else
-// *S* NESW: eg. B1010
+// *S* NEWS: eg. B1010
 
-int actions[][] = new int[SIZE][SIZE];
-// contains the direction which the robot would take to get on that square
+byte actions[16][16];
+// contains the direction for robot to take once robot is on that square
 
 /* Updates grid and actions from wall knowledge and robot position
    Recursively flood-fill the board 
 */
-int[] solve(int start_x, int start_y, int end_x, int end_y) {
+void solve(int start_x, int start_y, int end_x, int end_y) {
   int[] p = new int[] {start_x, start_y};
   boolean reachable = false;
   Queue q = new LinkedList();
@@ -53,10 +49,14 @@ int[] solve(int start_x, int start_y, int end_x, int end_y) {
     return new int[] {};
   }
   
-  int x = end_y;
-  int y = end_x;
+  grid[start_y][start_x] = 0;
+  
+  get_directions(end_x, end_y, new int[] {});
+}
+
+void get_directions(int x, int y, int[] directions) {
   int d = grid[y][x];
-  int[] directions = new int[d];
+  directions = new int[d];
   for (int i = d - 1; i >= 0; i--) {
     int dir = actions[y][x];
     int dx = (-2 * (dir / 2) + 1) * (dir % 2);
@@ -65,40 +65,19 @@ int[] solve(int start_x, int start_y, int end_x, int end_y) {
     x = x - dx;
     y = y - dy;
   }
-  return directions;
 }
 
 void setup() {
-  size(640, 640);
-  background(0);
-  stroke(255);
-  
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < 16; i++) {
     wall[0][i] += 8; // B1000;
     wall[i][0] += 1; // B0001;
-    wall[SIZE - 1][i] += 2; // B0010;
-    wall[i][SIZE - 1] += 4; // B0100;
+    wall[16 - 1][i] += 2; // B0010;
+    wall[i][16 - 1] += 4; // B0100;
   }
   
-  for (int i = 0; i < 10; i++) {
-    wall[6][i] += 8; // B1000;
-    wall[5][i] += 2; // B0010;
-  }
-  
-  println(solve(1, 1, 10, 2));
-  
-  background(0);
-  
-  for (int y = 0; y < SIZE; y ++) {
-    for (int x = 0; x < SIZE; x ++) {
-      fill(grid[y][x] * 5);
-      rect(x * 40, y * 40, 40, 40);
-      fill(255);
-      text(grid[y][x], x * 40 + 20, y * 40 + 20);
-    }
-  }
+  solve(1, 1, 10, 2);
 }
 
-void draw() {
+void loop() {
+  
 }
-
