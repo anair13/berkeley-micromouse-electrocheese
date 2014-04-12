@@ -1,8 +1,8 @@
-import java.awt.Point;
+  import java.awt.Point;
 import java.util.Queue;
 import java.util.LinkedList;
 
-int SIZE = 5;
+int SIZE = 16;
 
 int grid[][] = new int[SIZE][SIZE];
 // represents number of squares it will take robot to reach location
@@ -14,22 +14,21 @@ int wall[][] = new int[SIZE][SIZE];
 // *S* NESW: eg. B1010
 
 int actions[][] = new int[SIZE][SIZE];
-// contains the direction for robot to take once robot is on that square
+// contains the direction which the robot would take to get on that square
 
-/* Updates grid and actions from wall knowledge and robot position */
-void solve() {
-  expand(3, 3, 0, 0);
-  traverse(0, 0);
-}
-
-/* Recursively flood-fill the board */
-void expand(int start_x, int start_y, int end_x, int end_y) {
+/* Updates grid and actions from wall knowledge and robot position
+   Recursively flood-fill the board 
+*/
+int[] solve(int start_x, int start_y, int end_x, int end_y) {
   int[] p = new int[] {start_x, start_y};
   Queue q = new LinkedList();
   q.add(p);
   while (!q.isEmpty()) {
     int x = p[0];
     int y = p[1];
+    if (x == end_x && y == end_y) {
+      break;
+    }
     int w = wall[y][x];
     for (int dir = 0; dir < 4; dir++) {
       if ((w & (8 >> dir)) > 0) { // there is a wall in this direction
@@ -37,47 +36,45 @@ void expand(int start_x, int start_y, int end_x, int end_y) {
       }
       int dx = (-2 * (dir / 2) + 1) * (dir % 2);
       int dy = (2 * (dir / 2) - 1) * ((dir + 1) % 2);
-      if (grid[y + dy][x + dx] > -1) {
+      if (grid[y + dy][x + dx] > 0) {
         continue;
       }
       q.add(new int[] {x + dx, y + dy});
       grid[y + dy][x + dx] = grid[y][x] + 1;
+      actions[y + dy][x + dx] = dir;
     }
     p = (int[]) q.remove();
   }
+  grid[start_y][start_x] = 0;
+  
+  int x = end_y;
+  int y = end_x;
+  int d = grid[y][x];
+  int[] directions = new int[d];
+  for (int i = d - 1; i >= 0; i--) {
+    int dir = actions[y][x];
+    int dx = (-2 * (dir / 2) + 1) * (dir % 2);
+    int dy = (2 * (dir / 2) - 1) * ((dir + 1) % 2); 
+    directions[i] = dir;
+    x = x - dx;
+    y = y - dy;
+  }
+  return directions;
 }
 
-/* Recursively updates actions */
-void traverse(int x, int y) {
-  int w = wall[y][x];
-  int best_dir = 0;
-  int best_x = 0;
-  int best_y = 0;
-  int lowest_score = 1000;
-  for (int dir = 0; dir < 4; dir++) {
-    if ((w & (1 << dir)) > 0) { // there is a wall in this direction
-      continue;
-    }
-    int dx = (-2 * (dir / 2) + 1) * (dir % 2);
-    int dy = (2 * (dir / 2) - 1) * ((dir + 1) % 2);
-    int n = grid[y + dy][x + dx];
-    if (n == 0) {
-      actions[y][x] = dir;
-      return;
-    }
-    if (n < lowest_score) {
-      best_dir = dir;
-      best_x = x + dx;
-      best_y = y + dy;
-      lowest_score = n;
-    }      
-  }
-  actions[y][x] = best_dir;
-  traverse(best_x, best_y);
+void arrow(int x1, int y1, int x2, int y2) {
+  line(x1, y1, x2, y2);
+  pushMatrix();
+  translate(x2, y2);
+  float a = atan2(x1-x2, y2-y1);
+  rotate(a);
+  line(0, 0, -10, -10);
+  line(0, 0, 10, -10);
+  popMatrix();
 }
 
 void setup() {
-  size(640, 360);
+  size(640, 640);
   background(0);
   stroke(255);
   
@@ -88,17 +85,20 @@ void setup() {
     wall[i][SIZE - 1] += 4; // B0100;
   }
   
-  solve();
-}
-
-void draw() {
+  println(solve(1, 1, 10, 2));
+  
   background(0);
   
   for (int y = 0; y < SIZE; y ++) {
     for (int x = 0; x < SIZE; x ++) {
-      fill(grid[y][x] * 10);
-      rect(x * 40, y * 40, 40, 40); 
+      fill(grid[y][x] * 20);
+      rect(x * 40, y * 40, 40, 40);
+      fill(255);
+      text(grid[y][x], x * 40 + 20, y * 40 + 20);
     }
   }
+}
+
+void draw() {
 }
 
