@@ -12,17 +12,20 @@ byte wall[16][16];
 byte actions[16][16];
 // contains the direction for robot to take once robot is on that square
 
+int* directions;
+
 /* Updates grid and actions from wall knowledge and robot position
    Recursively flood-fill the board 
 */
 void solve(int start_x, int start_y, int end_x, int end_y) {
-  int[] p = new int[] {start_x, start_y};
   boolean reachable = false;
-  Queue q = new LinkedList();
-  q.add(p);
-  while (!q.isEmpty()) {
-    int x = p[0];
-    int y = p[1];
+  QueueList<int> qx;
+  QueueList<int> qy;
+  qx.push(start_x);
+  qy.push(start_y);
+  while (!qx.isEmpty()) {
+    int x = qx.pop();
+    int y = qy.pop();
     if (x == end_x && y == end_y) {
       reachable = true;
       break;
@@ -37,26 +40,28 @@ void solve(int start_x, int start_y, int end_x, int end_y) {
       if (grid[y + dy][x + dx] > 0) {
         continue;
       }
-      q.add(new int[] {x + dx, y + dy});
+      qx.push(x + dx);
+      qy.push(y + dy);
       grid[y + dy][x + dx] = grid[y][x] + 1;
       actions[y + dy][x + dx] = dir;
     }
-    p = (int[]) q.remove();
   }
   grid[start_y][start_x] = 0;
   
   if (!reachable) {
-    return new int[] {};
+    return;
   }
   
   grid[start_y][start_x] = 0;
   
-  get_directions(end_x, end_y, new int[] {});
+  get_directions(end_x, end_y, directions);
 }
 
-void get_directions(int x, int y, int[] directions) {
+void get_directions(int x, int y, int* directions) {
   int d = grid[y][x];
-  directions = new int[d];
+  int dirs[d];
+  directions = dirs;
+  
   for (int i = d - 1; i >= 0; i--) {
     int dir = actions[y][x];
     int dx = (-2 * (dir / 2) + 1) * (dir % 2);
