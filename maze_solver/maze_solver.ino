@@ -12,12 +12,20 @@ byte wall[16][16];
 byte actions[16][16];
 // contains the direction for robot to take once robot is on that square
 
-int* directions;
+byte directions[256];
 
 /* Updates grid and actions from wall knowledge and robot position
    Recursively flood-fill the board 
+   Returns length of solution
+   Stores required actions in directions
 */
-void solve(int start_x, int start_y, int end_x, int end_y) {
+int solve(int start_x, int start_y, int end_x, int end_y) {
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      grid[i][j] = 0;
+    }
+  }
+  
   boolean reachable = false;
   QueueList<int> qx;
   QueueList<int> qy;
@@ -49,18 +57,16 @@ void solve(int start_x, int start_y, int end_x, int end_y) {
   grid[start_y][start_x] = 0;
   
   if (!reachable) {
-    return;
+    return -1;
   }
   
   grid[start_y][start_x] = 0;
   
-  get_directions(end_x, end_y, directions);
+  return get_directions(end_x, end_y);
 }
 
-void get_directions(int x, int y, int* directions) {
+int get_directions(int x, int y) {
   int d = grid[y][x];
-  int dirs[d];
-  directions = dirs;
   
   for (int i = d - 1; i >= 0; i--) {
     int dir = actions[y][x];
@@ -70,9 +76,46 @@ void get_directions(int x, int y, int* directions) {
     x = x - dx;
     y = y - dy;
   }
+  
+  return d;
+}
+
+void show_grids() {
+  Serial.println("grid:");
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      Serial.print(grid[i][j]);
+    }
+    Serial.println();
+  }
+  Serial.println("actions:");
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      Serial.print(actions[i][j]);
+    }
+    Serial.println();
+  }
+}
+
+void show_directions(int d) {
+  Serial.print("finished algorithm. Length: ");
+  Serial.println(d);
+  for (int i = 0; i < d - 1; i++) {
+    Serial.print(directions[i]);
+    Serial.print(",");
+  }
+  Serial.println(directions[d-1]);
+}
+
+void drive(int d) {
+  for (int i = 0; i < d; i++) {
+    // directions[i]
+  }
 }
 
 void setup() {
+  Serial.begin(9600);
+  Serial.println("hello! the program begins");
   for (int i = 0; i < 16; i++) {
     wall[0][i] += 8; // B1000;
     wall[i][0] += 1; // B0001;
@@ -80,9 +123,13 @@ void setup() {
     wall[i][16 - 1] += 4; // B0100;
   }
   
-  solve(1, 1, 10, 2);
+  for (int i = 0; i < 10; i++) {
+    wall[6][i] += 8; // B1000;
+    wall[5][i] += 2; // B0010;
+  }
 }
 
 void loop() {
-  
+  int d = solve(1, 1, 2, 13);
+  show_directions(d);
 }

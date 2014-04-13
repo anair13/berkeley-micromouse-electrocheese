@@ -85,7 +85,7 @@ void setup() {
     wall[5][i] += 2; // B0010;
   }
   
-  println(solve(1, 1, 10, 2));
+  println(solve(1, 1, 2, 12));
   
   background(0);
   
