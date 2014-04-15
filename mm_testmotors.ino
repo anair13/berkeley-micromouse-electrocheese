@@ -44,14 +44,10 @@ const char sensorL = 1;
 const char sensorR = 2;
 
 // PID
-const int targetTicksL = 5;
-const int targetTicksR = 5;
+int targetL = 5;
+int targetR = 5;
 const float SENSOR_PERIOD = 10; // in ms
 float prevTime = 0;
-int stateChangesL = 0;
-int stateChangesR = 0;
-int prevStateL = 0;
-int prevStateR = 0;
 float prevErrorL = 0;
 float prevErrorR = 0;
 float integralErrorL = 0;
@@ -69,74 +65,33 @@ void setup() {
   pinMode(outputL2, OUTPUT);
   pinMode(outputR1, OUTPUT);
   pinMode(outputR2, OUTPUT);
-  moveBothForward(128);
+  setSpeedInTicks(255);
   Serial.begin(9600);
 }
 
 void loop() {
-  // Update states
-  int stateL = getStateL();
-  int stateR = getStateR();
+  float al = distSensorVtoCM(analogRead(sensorL) * 5.0 / 1024);
+  float ar = distSensorVtoCM(analogRead(sensorR) * 5.0 / 1024);
   
-  if (prevStateL != stateL) {
-    stateChangesL++;
+  if (al > ar) {
+    moveL(clampVoltage(pow(ar / al, 4)));
+    moveR(1);
+  } else {
+    moveR(clampVoltage(pow(al / ar, 4)));
+    moveL(1);
   }
-  if (prevStateR != stateR) {
-    stateChangesR++;
-  }
-
-  // Update ticks and check for trigger
-  /*
-  if (millis() - prevTime >= SENSOR_PERIOD) {
-    //adjustWheels();
-    prevTime = millis();
-    integralErrorL += getErrorL();
-    integralErrorR += getErrorR();
-  }
-  */
+  
+  delay(1);
 }
 
-void adjustWheels() {
-  float errorL = getErrorL(); // error in ticks
-  float errorR = getErrorR(); // error in ticks
-
-  float Kp = -1000000; // TODO adjust
-  float Ki = 0; // TODO adjust
-  float Kd = 0; // TODO adjust
-  float Pl = Kp * errorL;
-  float Il = Ki * integralErrorL;
-  float Dl = Kd * (errorL - prevErrorL) / SENSOR_PERIOD;
-  float Pr = Kp * errorR;
-  float Ir = Ki * integralErrorR;
-  float Dr = Kd * (errorR - prevErrorR) / SENSOR_PERIOD;
-
-  prevErrorL = errorL;
-  prevErrorR = errorR;
-
-  float responseL = Pl + Il + Dl;
-  float responseR = Pr + Ir + Dr;
-
-  if (responseL < 0) {
-    responseL = 0;
-  } else if (responseL > 255) {
-    responseL = 255;
+float clampVoltage(float voltage) {
+  if (voltage < 0) {
+    return 0;
+  } else if (voltage > 5) {
+    return 5;
+  } else {
+    return voltage;
   }
-  if (responseR < 0) {
-    responseR = 0;
-  } else if (responseR > 255) {
-    responseR = 255;
-  }
-
-  moveL(responseL);
-  moveR(responseR);
-}
-
-int getErrorL() {
-  return stateChangesL - targetTicksL;
-}
-
-int getErrorR() {
-  return stateChangesR - targetTicksR;
 }
 
 float distSensorVtoCM(float voltage) {
@@ -147,38 +102,40 @@ float distSensorCMtoV(float cm) {
   return -0.0556334 - 72.2653 / pow(cm, 2) + 30.2105 / cm + 0.00162233 * cm;
 }
 
-void moveBothForward(float voltage) {
-  moveL(ticksToVL(100));
-  moveR(ticksToVR(100));
+void setSpeedInTicks(int ticks) {
+  // Ticks per second
+  targetL = ticksToVL(ticks);
+  targetR = ticksToVR(ticks);
 }
 
 float ticksToVL(int ticks) {
-  return ticks / 1.06527;
+  // Ticks per second to voltage
+  return ticks / 2.13054;
 }
 
 float ticksToVR(int ticks) {
-  return ticks / 1.11082;
+  return ticks / 2.22164;
 }
 
 int VtoTicksL(float voltage) {
-  return voltage * 1.06527;
+  return voltage * 2.13054;
 }
 
 int VtoTicksR(float voltage) {
-  return voltage * 1.11082;
+  return voltage * 2.22164;
 }
 
 float ticksToCM(int ticks) {
   return (ticks / 48) * 4.2 * PI;
 }
 
-void moveL(float voltage) {
-  analogWrite(outputL1, voltage);
+void moveL(float c) {
+  analogWrite(outputL1, targetL * c);
   analogWrite(outputL2, 0);
 }
 
-void moveR(float voltage) {
-  analogWrite(outputR1, voltage);
+void moveR(float c) {
+  analogWrite(outputR1, targetR * c);
   analogWrite(outputR2, 0);
 }
 
