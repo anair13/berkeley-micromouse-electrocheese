@@ -195,6 +195,9 @@ void setup() {
     setWall(i, 7, 0);
   }
   
+  r.x = 1;
+  r.y = 1;
+  r.t = 0;
   int d = solve(1, 1, 2, 13);
   show_directions(d);
   drive();
