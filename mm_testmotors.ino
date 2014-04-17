@@ -43,14 +43,22 @@ const char sensorF = 0;
 const char sensorL = 1;
 const char sensorR = 2;
 
+// FUDGE
+const float SENSOR_R_FUDGE = 0.779;
+
 // PID
 int targetL = 5;
 int targetR = 5;
-const float SENSOR_PERIOD = 10; // in ms
 float prevTime = 0;
-
 float integralError = 0;
 float prevError = 0;
+
+const float SENSOR_PERIOD = 1000; // in ms
+float prevTimeEncoders = 0;
+float ticksL = 0;
+float ticksR = 0;
+int stateL = 0;
+int stateR = 0;
 
 void setup() {
   pinMode(encoderL1, INPUT);
@@ -66,28 +74,97 @@ void setup() {
   pinMode(outputR2, OUTPUT);
   setSpeedInTicks(255);
   Serial.begin(9600);
+  delay(2000);
+  turnL90();
+  delay(10);
+  moveL(0);
+  moveR(0);
 }
 
 void loop() {
-  /*
-  Notes from Ashvin:
-  Integral doesn't work yet and it doesn't seem very likely to work... maybe we need some limit/damper on the integration time bound...
-  Slow speeds work better, especially at the start. Try speed = 220 
-  Maybe we should average sensor reads
-  Rethought the control structure to fit PID, but doesn't work. I'll email alice and william today about what they do
-  */
-  
-  //Serial.println(analogRead(sensorL));
-  //Serial.println(analogRead(sensorR));
-  //float al = distSensorVtoCM(analogRead(sensorL) * 5.0 / 1024);
-  //float ar = distSensorVtoCM(analogRead(sensorR) * 5.0 / 1024);
-  float al = analogRead(sensorL) * 5.0 / 1024; // larger voltage means smaller distance
-  float ar = analogRead(sensorR) * 0.779 * 5.0 / 1024;
-  //float al = 1.0 / analogRead(sensorL);
-  //float ar = 1.0 / analogRead(sensorR);
+  //moveByEncoders();
+
+}
+
+void turnL90() {
+  float totalTicksL = 0;
+  float totalTicksR = 0;
+  const float TOTAL_TICKS = 100;
+  while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
+    int newStateL = getStateL();
+    int newStateR = getStateR();
+    if (newStateL != stateL) {
+      float inc = stateDelta(stateL, newStateL);
+      ticksL += inc;
+      totalTicksL += inc;
+      stateL = newStateL;
+    }
+    if (newStateR != stateR) {
+      float inc = stateDelta(stateR, newStateR);
+      ticksR += inc;
+      totalTicksR += inc;
+      stateR = newStateR;
+    }
+    if (millis() - prevTimeEncoders >= SENSOR_PERIOD) {
+      ticksL *= 0.95833333333333333333333333333333;
+      float error = (ticksL - ticksR) * 0.5 / SENSOR_PERIOD;
+      moveL(leftVMotor(clamp(-(1 - error), -2, 0)));
+      moveR(rightVMotor(clamp(1 + error, 0, 2)));
+    
+      ticksL = 0;
+      ticksR = 0;
+    
+      prevTimeEncoders = millis();
+    }
+  }
+}
+
+bool isWallL() {
+  return (readSensorL() > 1);
+}
+
+bool isWallR() {
+  return (readSensorR() > 1);
+}
+
+void moveByEncoders() {
+  int newStateL = getStateL();
+  int newStateR = getStateR();
+  if (newStateL != stateL) {
+    ticksL += stateDelta(stateL, newStateL);
+    stateL = newStateL;
+  }
+  if (newStateR != stateR) {
+    ticksR += stateDelta(stateR, newStateR);
+    stateR = newStateR;
+  }
+  if (millis() - prevTimeEncoders >= SENSOR_PERIOD) {
+    ticksL *= 0.95833333333333333333333333333333;
+    float error = (ticksL - ticksR) * 0.5 / SENSOR_PERIOD;
+    moveL(leftVMotor(clamp(1 - error, 0, 2)));
+    moveR(rightVMotor(clamp(1 + error, 0, 2)));
+    
+    ticksL = 0;
+    ticksR = 0;
+    
+    prevTimeEncoders = millis();
+  }
+}
+
+float readSensorL() {
+  return analogRead(sensorL) * 5.0 / 1024;
+}
+
+float readSensorR() {
+  return analogRead(sensorR) * SENSOR_R_FUDGE * 5.0 / 1024;
+}
+
+void moveBySensors() {
+  float al = readSensorL(); // larger voltage means smaller distance
+  float ar = readSensorR();
   float p = 1;
   float i = 1;
-  float d = 0;
+  float d = 0.2;
   float error = al - ar; // range: ~ [-0.5 , 0.5]
   // if error is positive, al > ar, dist(al) < dist(ar), closer to right
   // turn left if error is positive
@@ -95,39 +172,14 @@ void loop() {
   
   float P = p * error;
   float I = i * integralError;
-  float D = d * (error - prevError) / timeElapsed;
+  float D = d * (error - prevError) / timeElapsed; // range 10
   float PID = P + I + D;
-  moveL(leftV(clamp(1 - PID, 0, 2)));
-  moveR(rightV(clamp(1 + PID, 0, 2)));
+  moveL(leftVSensor(clamp(1 - PID, 0, 2)));
+  moveR(rightVSensor(clamp(1 + PID, 0, 2)));
   
   integralError += error * timeElapsed;
   prevError = error;
   prevTime = millis();
-  /*
-  float difference = p * (ar - al);
-  float R = ar + difference - derivative + i * integral;
-  float L = al - difference + derivative - i * integral;
-  float m = max(R, L);
-  derivative = d * (R/m - L/m);
-  integral += difference;
-  moveR(R / m);
-  moveL(L / m);  
-  */
-//  float bigger = max(al, ar);
-//  moveR(ar / bigger);
-//  moveL(al / bigger);
-  
-//  if (al > ar) {
-//    //moveR((al - ar)/big); // this works counterintuitively well
-//    moveR(ar/al);
-//    moveL(1);
-//  } else {
-//    moveL(al/ar);
-//    //moveL((ar - al)/big); // this works counterintuitively well
-//    moveR(1);
-//  }
-
-  delay(1);
 }
 
 float clamp(float v, float _min, float _max) {
@@ -137,16 +189,6 @@ float clamp(float v, float _min, float _max) {
     return _max;
   } else {
     return v;
-  }
-}
-
-float clampVoltage(float voltage) {
-  if (voltage < 0) {
-    return 0;
-  } else if (voltage > 255) {
-    return 255;
-  } else {
-    return voltage;
   }
 }
 
@@ -164,11 +206,11 @@ void setSpeedInTicks(int ticks) {
   targetR = ticksToVR(ticks);
 }
 
-float leftV(float voltage) {
+float leftVSensor(float voltage) {
   return voltage * 0.95899425649410083663005614915752;
 }
 
-float rightV(float voltage) {
+float rightVSensor(float voltage) {
   return voltage;
 }
 
@@ -196,13 +238,23 @@ float ticksToCM(int ticks) {
 }
 
 void moveL(float c) {
-  analogWrite(outputL1, clamp(targetL * c, 0, 255));
-  analogWrite(outputL2, 0);
+  if (c >= 0) {
+    analogWrite(outputL1, clamp(targetL * c, 0, 255));
+    analogWrite(outputL2, 0);
+  } else {
+    analogWrite(outputL1, 0);
+    analogWrite(outputL2, clamp(-targetL * c, 0, 255));
+  }
 }
 
 void moveR(float c) {
-  analogWrite(outputR1, clamp(targetR * c, 0, 255));
-  analogWrite(outputR2, 0);
+  if (c >= 0) {
+    analogWrite(outputR1, clamp(targetR * c, 0, 255));
+    analogWrite(outputR2, 0);
+  } else {
+    analogWrite(outputR1, 0);
+    analogWrite(outputR2, clamp(-targetR * c, 0, 255));
+  }
 }
 
 int getStateL() {
@@ -215,4 +267,19 @@ int getStateR() {
   int a = (digitalRead(encoderR1) == HIGH) ? 1 : 0;
   int b = ((digitalRead(encoderR2) == HIGH) ? 1 : 0) ^ a;
   return a * 2 + b;
+}
+
+float leftVMotor(float voltage) {
+  return voltage;
+}
+
+float rightVMotor(float voltage) {
+  return voltage;
+}
+
+int stateDelta(int from, int to) {
+  if (from > to) {
+    to += 4;
+  }
+  return to - from;
 }
