@@ -2,9 +2,9 @@
 
 class Robot {
   public:
-    float x, y, t;
+    int x, y, t;
 
-    Robot(float _x, float _y, float _t) {
+    Robot(int _x, int _y, int _t) {
       x = _x;
       y = _y;
       t = _t;
@@ -12,6 +12,8 @@ class Robot {
 };
 
 Robot r(0, 0, 1);
+int dest_x = 2;
+int dest_y = 2;
 
 // Utility conversion functions
 int X(int dir) { // x direction dir points in
@@ -165,45 +167,67 @@ void show_directions(int d) {
 void drive() {
   for (int i = 0; i < dir_length; i++) {
     int dir = directions[i];
-    go(dir - r.t);
+    sim_go(dir - r.t);
   }
 }
 
 // simulates i 90 degree turns, then 1 forward
-void go(int i) {
+void sim_go(int i) {
   if (i != 0) {
     Serial.print("turn ");
     Serial.println(i);
   }
   Serial.println("move forward");
-  r.t += i;
+  r.t = (r.t + i) % 4;
+  r.x += X(r.t);
+  r.y += Y(r.t);
+  Serial.print("turned in direction ");
+  Serial.println(r.t);
+  Serial.print("<");
+  Serial.print(X(r.t));
+  Serial.print(",");
+  Serial.print(Y(r.t));
+  Serial.println(">");
+}
+
+void go(int i) {
+  if (i != 0) {
+    if (i == 1) {
+      turn(60);
+    }
+    else if (i == 2) {
+      turn(120);
+    }
+    else if (i == 3) {
+      turn(-60);
+    }
+  }
+  moveF(1);
+  r.t = (r.t + i) % 4;  
   r.x += X(r.t);
   r.y += Y(r.t);
 }
 
-void setup() {  
+void setup() {
+  Serial.begin(9600);
   setup_control();
   
-  /*for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 3; i++) {
     setWall(i, 0, 0); // B1000;
-    setWall(15, i, 1);
-    setWall(i, 15, 2);
+    setWall(2, i, 1);
+    setWall(i, 2, 2);
     setWall(0, i, 3); // B0001;
   }
   
-  for (int i = 0; i < 10; i++) {
-    setWall(i, 7, 0);
-  }
+  //for (int i = 0; i < 10; i++) {
+  //  setWall(i, 7, 0);
+  //}
   
-  r.x = 1;
-  r.y = 1;
-  r.t = 0;
-  int d = solve(1, 1, 2, 13);
-  show_directions(d);
-  drive();*/
+  //int d = solve(0, 0, 2, 2);
+  //show_directions(d);
+  //drive();
   
   //turnBySensor(1);
-  Serial.begin(9600);
   //delay(2000);
   //moveByEncoders();
   //delay(10);
@@ -214,12 +238,18 @@ void setup() {
 }
 
 void loop() {
-  moveF(2);
-  moveL(0);
-  moveR(0);
-  delay(1000);
-  turn(-60);
-  moveL(0);
-  moveR(0);
-  delay(1000);
+  //moveF(2);
+  //moveL(0);
+  //moveR(0);
+  //delay(5000);
+  //turn(-60);
+  //moveL(0);
+  //moveR(0);
+  //delay(5000);
+  if (r.x != dest_x || r.y != dest_y) { 
+    solve(r.x, r.y, dest_x, dest_y);
+    int dir = directions[0];
+    go(dir - r.t);
+    delay(200);
+  }
 }

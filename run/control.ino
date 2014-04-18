@@ -64,6 +64,11 @@ const float TICK_COUNTER_L_FUDGE = 0.95833333333333333333333333333333;
 int targetL = 0;
 int targetR = 0;
 
+int ticksL;
+int ticksR;
+int stateL;
+int stateR;
+int prevTimeEncoders;
 const float SENSOR_PERIOD = 10; // in ms
 
 void setup_control() {
