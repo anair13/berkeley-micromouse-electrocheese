@@ -203,7 +203,7 @@ void setup() {
   drive();*/
   
   //turnBySensor(1);
-  //Serial.begin(9600);
+  Serial.begin(9600);
   //delay(2000);
   //moveByEncoders();
   //delay(10);
@@ -217,9 +217,9 @@ void loop() {
   moveF(2);
   moveL(0);
   moveR(0);
-  delay(5000);
-  //turn(-60);
-  //moveL(0);
-  //moveR(0);
-  //delay(5000);
+  delay(1000);
+  turn(-60);
+  moveL(0);
+  moveR(0);
+  delay(1000);
 }
