@@ -20,14 +20,14 @@ int X(int dir) { // x direction dir points in
   return (-2 * (dir / 2) + 1) * (dir % 2);
 }
 int Y(int dir) { // y direction dir points in
-  return (2 * (dir / 2) - 1) * ((dir + 1) % 2); 
+  return (2 * (dir / 2) - 1) * ((dir + 1) % 2);
 }
 int O(int dir) { // opposite direction of dir
   return (dir + 2) % 4;
 }
 int L(int dir) { // direction on the left
   return (dir - 1) % 4;
-}    
+}
 int R(int dir) { // direction on the right
   return (dir + 1) % 4;
 }
@@ -38,7 +38,7 @@ byte grid[16][16];
 // top left corner (0,0), square (x,y) at [y,x]
 
 byte wall[16][16];
-// *N* wall contains 4-bit integers 
+// *N* wall contains 4-bit integers
 // WOE N = 1 if a wall to the north, 0 else
 // *S* NEWS: eg. B1010
 
@@ -50,7 +50,7 @@ byte directions[256];
 // contains the directions for robot to take from start to finish
 
 /* Updates grid and actions from wall knowledge and robot position
-   Recursively flood-fill the board 
+   Recursively flood-fill the board
    Returns length of solution
    Stores required actions in directions
 */
@@ -60,7 +60,7 @@ int solve(int start_x, int start_y, int end_x, int end_y) {
       grid[i][j] = 0;
     }
   }
-  
+
   boolean reachable = false;
   QueueList<int> qx;
   QueueList<int> qy;
@@ -90,28 +90,28 @@ int solve(int start_x, int start_y, int end_x, int end_y) {
     }
   }
   grid[start_y][start_x] = 0;
-  
+
   if (!reachable) {
     return -1;
   }
-  
+
   grid[start_y][start_x] = 0;
-  
+
   return get_directions(end_x, end_y);
 }
 
 int get_directions(int x, int y) {
   int d = grid[y][x];
-  
+
   for (int i = d - 1; i >= 0; i--) {
     int dir = actions[y][x];
     int dx = X(dir);
-    int dy = Y(dir); 
+    int dy = Y(dir);
     directions[i] = dir;
     x = x - dx;
     y = y - dy;
   }
-  
+
   dir_length = d; // set a global variable
   return d;
 }
@@ -161,7 +161,7 @@ void show_directions(int d) {
     Serial.print(directions[i]);
     Serial.print(",");
   }
-  Serial.println(directions[d-1]);
+  Serial.println(directions[d - 1]);
 }
 
 void drive() {
@@ -193,17 +193,17 @@ void sim_go(int i) {
 void go(int i) {
   if (i != 0) {
     if (i == 1) {
-      turn(60);
+      turn(90);
     }
     else if (i == 2) {
-      turn(120);
+      turn(180);
     }
     else if (i == 3) {
-      turn(-60);
+      turn(-90);
     }
   }
   moveF(1);
-  r.t = (r.t + i) % 4;  
+  r.t = (r.t + i) % 4;
   r.x += X(r.t);
   r.y += Y(r.t);
 }
@@ -211,22 +211,23 @@ void go(int i) {
 void setup() {
   Serial.begin(9600);
   setup_control();
-  
+  turn(90);
+
   for (int i = 0; i < 3; i++) {
     setWall(i, 0, 0); // B1000;
     setWall(2, i, 1);
     setWall(i, 2, 2);
     setWall(0, i, 3); // B0001;
   }
-  
+
   //for (int i = 0; i < 10; i++) {
   //  setWall(i, 7, 0);
   //}
-  
+
   //int d = solve(0, 0, 2, 2);
   //show_directions(d);
   //drive();
-  
+
   //turnBySensor(1);
   //delay(2000);
   //moveByEncoders();
@@ -246,10 +247,10 @@ void loop() {
   //moveL(0);
   //moveR(0);
   //delay(5000);
-  if (r.x != dest_x || r.y != dest_y) { 
+  if (r.x != dest_x || r.y != dest_y) {
     solve(r.x, r.y, dest_x, dest_y);
     int dir = directions[0];
-    go(dir - r.t);
+    sim_go(dir - r.t);
     delay(200);
   }
 }

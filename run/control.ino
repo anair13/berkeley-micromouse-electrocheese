@@ -146,7 +146,7 @@ void turn(int deg) {
   float totalTicksR = 0;
   float stateL = 0;
   float stateR = 0;
-  float TOTAL_TICKS = 18 * abs(deg) / 90;
+  float TOTAL_TICKS = (13.0 * abs(deg)) / 90;
   float prevTimeEncoders = millis();
   while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
     int newStateL = getStateL();
