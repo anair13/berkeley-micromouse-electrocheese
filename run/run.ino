@@ -202,6 +202,9 @@ void go(int i) {
       turn(-90);
     }
   }
+  moveL(0);
+  moveR(0);
+  delay(1000);
   moveF(1);
   r.t = (r.t + i) % 4;
   r.x += X(r.t);
@@ -211,7 +214,7 @@ void go(int i) {
 void setup() {
   Serial.begin(9600);
   setup_control();
-  turn(90);
+  //turn(90);
 
   for (int i = 0; i < 3; i++) {
     setWall(i, 0, 0); // B1000;
@@ -250,7 +253,7 @@ void loop() {
   if (r.x != dest_x || r.y != dest_y) {
     solve(r.x, r.y, dest_x, dest_y);
     int dir = directions[0];
-    sim_go(dir - r.t);
+    go(dir - r.t);
     delay(200);
   }
 }

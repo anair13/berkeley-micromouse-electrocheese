@@ -134,6 +134,7 @@ void moveF(float blocks) {
   }
   moveL(0);
   moveR(0);
+  brake(1, 1);
 }
 
 //void crashRecovery()
