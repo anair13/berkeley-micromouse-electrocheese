@@ -45,6 +45,7 @@ const char sensorR = 2;
 
 // FUDGE
 const float SENSOR_R_FUDGE = 0.779;
+const float TICK_COUNTER_L_FUDGE = 0.95833333333333333333333333333333;
 
 // PID
 int targetL = 5;
@@ -53,7 +54,7 @@ float prevTime = 0;
 float integralError = 0;
 float prevError = 0;
 
-const float SENSOR_PERIOD = 1000; // in ms
+const float SENSOR_PERIOD = 10; // in ms
 float prevTimeEncoders = 0;
 float ticksL = 0;
 float ticksR = 0;
@@ -72,24 +73,65 @@ void setup() {
   pinMode(outputL2, OUTPUT);
   pinMode(outputR1, OUTPUT);
   pinMode(outputR2, OUTPUT);
-  setSpeedInTicks(255);
+  setSpeedInTicks(128);
   Serial.begin(9600);
-  delay(2000);
-  turnL90();
-  delay(10);
-  moveL(0);
-  moveR(0);
+  //delay(2000);
+  //moveByEncoders();
+  //delay(10);
+  //moveL(0);
+  //moveR(0);
+  while(true) {
+    moveF(2);
+    moveL(0);
+    moveR(0);
+    delay(1000);
+    turn(-60);
+    moveL(0);
+    moveR(0);
+    delay(1000);
+  }
 }
 
 void loop() {
   //moveByEncoders();
-
 }
 
-void turnL90() {
+void realign() {
+  float fbest = readSensorF();
+  while (true) {
+    turn(-1);
+    float f = readSensorF();
+    if (f > fbest) {
+      f = fbest;
+    }
+  }
+}
+
+void moveF(int blocks) {
+  int _counterL;
+  int _counterR;
+  int _stateL;
+  int _stateR;
+  int TOTAL_TICKS = blocks * 125;
+  setupTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
+  while ((readTickCounterL(&_counterL) + readTickCounterR(&_counterR)) / 2 < TOTAL_TICKS) {
+    if (isWallL() && isWallR()) {
+      moveBySensors();
+    } else {
+      moveByEncoders();
+    }
+    updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
+    delay(1);
+  }
+  moveL(0);
+  moveR(0);
+}
+
+// negative is left, positive is right
+void turn(int deg) {
   float totalTicksL = 0;
   float totalTicksR = 0;
-  const float TOTAL_TICKS = 100;
+  const float TOTAL_TICKS = 25 * deg / 90;
   while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
     int newStateL = getStateL();
     int newStateR = getStateR();
@@ -106,10 +148,15 @@ void turnL90() {
       stateR = newStateR;
     }
     if (millis() - prevTimeEncoders >= SENSOR_PERIOD) {
-      ticksL *= 0.95833333333333333333333333333333;
+      ticksL *= TICK_COUNTER_L_FUDGE;
       float error = (ticksL - ticksR) * 0.5 / SENSOR_PERIOD;
-      moveL(leftVMotor(clamp(-(1 - error), -2, 0)));
-      moveR(rightVMotor(clamp(1 + error, 0, 2)));
+      if (deg < 0) {
+        moveL(leftVMotor(clamp(-(2 - error), -3, -1)));
+        moveR(rightVMotor(clamp(2 + error, 1, 3)));
+      } else {
+        moveL(leftVMotor(clamp(1 - error, 0, 2)));
+        moveR(rightVMotor(clamp(-(1 + error), -2, 0)));
+      }
     
       ticksL = 0;
       ticksR = 0;
@@ -120,11 +167,11 @@ void turnL90() {
 }
 
 bool isWallL() {
-  return (readSensorL() > 1);
+  return (readSensorL() > 1.2);
 }
 
 bool isWallR() {
-  return (readSensorR() > 1);
+  return (readSensorR() > 1.2);
 }
 
 void moveByEncoders() {
@@ -141,8 +188,14 @@ void moveByEncoders() {
   if (millis() - prevTimeEncoders >= SENSOR_PERIOD) {
     ticksL *= 0.95833333333333333333333333333333;
     float error = (ticksL - ticksR) * 0.5 / SENSOR_PERIOD;
-    moveL(leftVMotor(clamp(1 - error, 0, 2)));
-    moveR(rightVMotor(clamp(1 + error, 0, 2)));
+    // Slow down if moving too fast
+    if (ticksL < 0.5 * SENSOR_PERIOD) {
+      moveL(leftVMotor(clamp(1 - error, 0, 2)));
+      moveR(rightVMotor(clamp(1 + error, 0, 2)));
+    } else {
+      moveL(0);
+      moveR(0);
+    }
     
     ticksL = 0;
     ticksR = 0;
@@ -151,12 +204,51 @@ void moveByEncoders() {
   }
 }
 
+//////////////////////////
+void setupTickCounters(int* counterL, int* counterR, int* stateL, int* stateR) {
+  *counterL = 0;
+  *counterR = 0;
+  *stateL = 0;
+  *stateR = 0;
+}
+
+void updateTickCounters(int* counterL, int* counterR, int* stateL, int* stateR) {
+  int newStateL = getStateL();
+  int newStateR = getStateR();
+  if (newStateL != *stateL) {
+    *counterL += stateDelta(*stateL, newStateL);
+    *stateL = newStateL;
+  }
+  if (newStateR != *stateR) {
+    *counterR += stateDelta(*stateR, newStateR);
+    *stateR = newStateR;
+  }
+}
+
+void resetTickCounters(int* counterL, int* counterR) {
+  *counterL = 0;
+  *counterR = 0;
+}
+
+int readTickCounterL(int* counterL) {
+  return *counterL * TICK_COUNTER_L_FUDGE;
+}
+
+int readTickCounterR(int* counterR) {
+  return *counterR;
+}
+/////////////
+
 float readSensorL() {
   return analogRead(sensorL) * 5.0 / 1024;
 }
 
 float readSensorR() {
   return analogRead(sensorR) * SENSOR_R_FUDGE * 5.0 / 1024;
+}
+
+float readSensorF() {
+  return analogRead(sensorF) * 5.0 / 1024;
 }
 
 void moveBySensors() {
@@ -211,6 +303,10 @@ float leftVSensor(float voltage) {
 }
 
 float rightVSensor(float voltage) {
+  return voltage;
+}
+
+float frontVSensor(float voltage) {
   return voltage;
 }
 
