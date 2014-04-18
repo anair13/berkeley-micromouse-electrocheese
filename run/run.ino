@@ -181,10 +181,10 @@ void go(int i) {
   r.y += Y(r.t);
 }
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println("hello! the program begins");
-  for (int i = 0; i < 16; i++) {
+void setup() {  
+  setup_control();
+  
+  /*for (int i = 0; i < 16; i++) {
     setWall(i, 0, 0); // B1000;
     setWall(15, i, 1);
     setWall(i, 15, 2);
@@ -200,8 +200,26 @@ void setup() {
   r.t = 0;
   int d = solve(1, 1, 2, 13);
   show_directions(d);
-  drive();
+  drive();*/
+  
+  //turnBySensor(1);
+  //Serial.begin(9600);
+  //delay(2000);
+  //moveByEncoders();
+  //delay(10);
+  //moveL(0);
+  //moveR(0);
+  //while(true) {
+  //}
 }
 
 void loop() {
+  moveF(2);
+  moveL(0);
+  moveR(0);
+  delay(5000);
+  //turn(-60);
+  //moveL(0);
+  //moveR(0);
+  //delay(5000);
 }
