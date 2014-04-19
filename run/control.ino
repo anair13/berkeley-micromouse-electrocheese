@@ -66,6 +66,9 @@ const float TICK_COUNTER_L_FUDGE = 0.95833333333333333333333333333333;
 int targetL = 0;
 int targetR = 0;
 
+// Am I stuck?  Dear god I hope I'm not stuck...
+float timeSinceLastUnstuck = millis();
+
 int ticksL;
 int ticksR;
 int stateL;
@@ -110,8 +113,11 @@ void moveF(float blocks) {
   int mode = MODE_SENSOR;
   State state;
   state.reset();
+  amNotStuck();
   while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
-    if (isWallL() && isWallR()) {
+    float l = readSensorL();
+    float r = readSensorR();
+    if (isWallL() && isWallR() && abs(l - r) <= 1) {
       if (mode != MODE_SENSOR) {
         mode = MODE_SENSOR;
         state.reset();
@@ -141,8 +147,22 @@ void moveF(float blocks) {
       _stateR = newStateR;
     }
     //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
+    
+    // Am I stuck?
+    if (isStuck()) {
+      lightOn();
+      moveL(-1);
+      moveR(-1);
+      delay(400);
+      lightOff();
+      moveL(0);
+      moveR(0);
+      amNotStuck();
+    }
+    
     delay(1);
   }
+  amNotStuck();
   moveL(0);
   moveR(0);
   brake(1, 1);
@@ -160,6 +180,7 @@ void turn(int deg) {
   float stateR = 0;
   float TOTAL_TICKS = (13.0 * abs(deg)) / 90;
   float prevTimeEncoders = millis();
+  amNotStuck();
   while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
     int newStateL = getStateL();
     int newStateR = getStateR();
@@ -193,7 +214,18 @@ void turn(int deg) {
     
       prevTimeEncoders = millis();
     }
+    if (isStuck()) {
+      lightOn();
+      moveL(-1);
+      moveR(-1);
+      delay(400);
+      lightOff();
+      moveL(0);
+      moveR(0);
+      amNotStuck();
+    }
   }
+  amNotStuck();
   if (deg > 0) {
     brake(-1, 1);
   }
@@ -459,4 +491,16 @@ void brake(int ldir, int rdir) {
   delay(150);
   moveR(0);
   moveL(0);
+}
+
+void amNotStuck() {
+  timeSinceLastUnstuck = millis();
+}
+
+bool isStuck() {
+  if (millis() > 2000 + timeSinceLastUnstuck) {
+    return true;
+  } else {
+    return false;
+  }
 }
