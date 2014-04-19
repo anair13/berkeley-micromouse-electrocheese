@@ -12,7 +12,7 @@ class Robot {
 };
 
 Robot r(0, 0, 1);
-int dest_x = 2;
+int dest_x = 5;
 int dest_y = 2;
 
 // Utility conversion functions
@@ -201,12 +201,20 @@ void go(int i) {
     else if (i == 3) {
       turn(-90);
     }
+    moveL(0);
+    moveR(0);
+    r.t = (r.t + i) % 4;
+    delay(500);
+    if (readSensorF() > 2.0) {
+      frontWall();
+      lightOn();
+      return;
+    }
+    else {
+      lightOff();
+    }
   }
-  moveL(0);
-  moveR(0);
-  delay(1000);
   moveF(1);
-  r.t = (r.t + i) % 4;
   r.x += X(r.t);
   r.y += Y(r.t);
 }
@@ -217,10 +225,13 @@ void setup() {
   //turn(90);
 
   for (int i = 0; i < 3; i++) {
-    setWall(i, 0, 0); // B1000;
-    setWall(2, i, 1);
-    setWall(i, 2, 2);
-    setWall(0, i, 3); // B0001;
+    setWall(5, i, 1); // right wall
+    setWall(0, i, 3); // left wall
+  }
+  
+  for (int i = 0; i < 6; i++) {
+    setWall(i, 0, 0); // top wall
+    setWall(i, 2, 2); // bottom wall
   }
 
   //for (int i = 0; i < 10; i++) {
@@ -254,6 +265,13 @@ void loop() {
     solve(r.x, r.y, dest_x, dest_y);
     int dir = directions[0];
     go(dir - r.t);
-    delay(200);
+    delay(500);
+    if (readSensorF() > 2.0) {
+      frontWall();
+      lightOn();
+    }
+    else {
+      lightOff();
+    }
   }
 }

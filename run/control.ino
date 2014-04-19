@@ -33,6 +33,7 @@ class State {
 10: output R
 11: bump R
 12: bump L
+13: LED
 */
 
 //// Pins
@@ -50,6 +51,7 @@ const char outputR1 = 9;
 const char outputR2 = 10;
 const char outputL1 = 6;
 const char outputL2 = 5;
+const char led = 13;
 
 // Analog
 const char sensorF = 0;
@@ -83,7 +85,16 @@ void setup_control() {
   pinMode(outputL2, OUTPUT);
   pinMode(outputR1, OUTPUT);
   pinMode(outputR2, OUTPUT);
+  pinMode(led, OUTPUT);
   setSpeedInTicks(200);
+}
+
+void lightOn() {
+  digitalWrite(led, HIGH);
+}
+
+void lightOff() {
+  digitalWrite(led, LOW);
 }
 
 void moveF(float blocks) {
