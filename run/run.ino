@@ -210,7 +210,7 @@ void go(int i) {
     if (r.t < 0) {
       r.t += 4;
     }
-    r.t = r.t % 4;    
+    r.t = r.t % 4;
   } else {
     if (readSensorF() > 2.0) {
       frontWall();
