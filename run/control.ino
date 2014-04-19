@@ -146,10 +146,20 @@ void moveF(float blocks) {
       _counterR += stateDelta(_stateR, newStateR);
       _stateR = newStateR;
     }
+    //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
+    
+    // Am I stuck?
     if (isStuck()) {
       lightOn();
+      moveL(-1);
+      moveR(-1);
+      delay(400);
+      lightOff();
+      moveL(0);
+      moveR(0);
+      amNotStuck();
     }
-    //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
+    
     delay(1);
   }
   amNotStuck();
@@ -170,6 +180,7 @@ void turn(int deg) {
   float stateR = 0;
   float TOTAL_TICKS = (13.0 * abs(deg)) / 90;
   float prevTimeEncoders = millis();
+  amNotStuck();
   while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
     int newStateL = getStateL();
     int newStateR = getStateR();
@@ -203,7 +214,18 @@ void turn(int deg) {
     
       prevTimeEncoders = millis();
     }
+    if (isStuck()) {
+      lightOn();
+      moveL(-1);
+      moveR(-1);
+      delay(400);
+      lightOff();
+      moveL(0);
+      moveR(0);
+      amNotStuck();
+    }
   }
+  amNotStuck();
   if (deg > 0) {
     brake(-1, 1);
   }
@@ -476,7 +498,7 @@ void amNotStuck() {
 }
 
 bool isStuck() {
-  if (millis() > 5000 + timeSinceLastUnstuck) {
+  if (millis() > 2000 + timeSinceLastUnstuck) {
     return true;
   } else {
     return false;
