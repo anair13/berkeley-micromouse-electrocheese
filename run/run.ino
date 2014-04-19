@@ -255,7 +255,7 @@ void setup() {
   //show_directions(d);
   //drive();
 
-  //turnBySensor(1);
+  turnBySensor(1);
   //delay(2000);
   //moveByEncoders();
   //delay(10);
@@ -263,7 +263,7 @@ void setup() {
   //moveR(0);
   //while(true) {
   //}
-  realign();
+  //realign();
 }
 
 void loop() {

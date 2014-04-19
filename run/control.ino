@@ -23,25 +23,43 @@ class State {
 
 class SensorData {
   private:
-    int i;
+    int c;
   public:
-    float[5] data;
+    int SIZE;
+    float* data;
+    int points;
     
-    SensorData() {
-      i = 0;
+    SensorData(int a) {
+      SIZE = 5;
+      data = new float[SIZE];
+      c = 0;
+      points = 0;
+      for (int i = 0; i < SIZE; i++) {
+        data[i] = 0;
+      }
     }
     
     float average() {
       float avg = 0;
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < SIZE; i++) {
         avg += data[i];
       }
-      avg /= 5;
+      return avg / SIZE;
+    }
+    
+    float stddev() {
+      float stddev = 0;
+      float avg = average();
+      for (int i = 0; i < SIZE; i++) {
+        stddev += abs(data[i] - average());
+      }
+      return stddev / SIZE;
     }
     
     void enqueue(float v) {
-      data[i] = v;
-      i = (i + 1) % 5;
+      data[c] = v;
+      c = (c + 1) % SIZE;
+      points++;
     }
 };
 
@@ -123,6 +141,13 @@ void lightOn() {
 
 void lightOff() {
   digitalWrite(led, LOW);
+}
+
+void lightBlink() {
+  lightOn();
+  delay(200);
+  lightOff();
+  delay(200);
 }
 
 bool moveF(float blocks) {
@@ -359,7 +384,7 @@ void turnBySensorAlreadyStraight() {
 
 void turnBySensor(float dir) {
   lightOn();
-  turnBySensor2(dir, 0.02);
+  turnBySensor2(dir, 0.001);
 }
 
 void realign() { // assumes we are pointing at a wall
@@ -380,36 +405,35 @@ void realign() { // assumes we are pointing at a wall
 }
 
 void turnBySensor2(float dir, float threshold) { // positive for clockwise
-  if (threshold < 0.004) {
+  lightOff();
+  if (threshold < 0.0001) {
     return;
   }
   if (abs(dir) < 0.8) {
     dir = (dir < 0 ? -1 : 1) * 0.8;
   }
-  float f_prev = readSensorF();
   moveR(dir);
   moveL(-dir);
-  float derivDelta = 999999999;
+  float old_stddev = 0;
+  SensorData sensorData(0);
   while (true) {
-    delay(2);
+    //delay(2);
     float f = readSensorF();
-    if (f < f_prev - threshold) {
-      break;
-    }
-    else {
-      if (abs(f - f_prev) > 0.1) {
-        break;
-      } else {
-        derivDelta = abs(f - f_prev);
-        f_prev = f;
+    sensorData.enqueue(f);
+    if (sensorData.points >= sensorData.SIZE) {
+      float stddev = sensorData.stddev();
+      if (old_stddev != 0) {
+        if (stddev > old_stddev + threshold) {
+          break;
+        }
       }
+      old_stddev = stddev;
     }
   }
   //brake(-dir, dir);
   moveR(0);
   moveL(0);
   turnBySensor2(-dir, threshold * 0.9);
-  lightOff();
 }
 
 void moveBySensors(class State* state) {
