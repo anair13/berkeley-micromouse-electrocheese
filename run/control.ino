@@ -66,6 +66,9 @@ const float TICK_COUNTER_L_FUDGE = 0.95833333333333333333333333333333;
 int targetL = 0;
 int targetR = 0;
 
+// Am I stuck?  Dear god I hope I'm not stuck...
+float timeSinceLastUnstuck = millis();
+
 int ticksL;
 int ticksR;
 int stateL;
@@ -110,10 +113,11 @@ void moveF(float blocks) {
   int mode = MODE_SENSOR;
   State state;
   state.reset();
+  amNotStuck();
   while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
     float l = readSensorL();
     float r = readSensorR();
-    if (isWallL() && isWallR() && abs(l - r) <= 0.5) {
+    if (isWallL() && isWallR() && abs(l - r) <= 1) {
       if (mode != MODE_SENSOR) {
         mode = MODE_SENSOR;
         state.reset();
@@ -142,9 +146,13 @@ void moveF(float blocks) {
       _counterR += stateDelta(_stateR, newStateR);
       _stateR = newStateR;
     }
+    if (isStuck()) {
+      lightOn();
+    }
     //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
     delay(1);
   }
+  amNotStuck();
   moveL(0);
   moveR(0);
   brake(1, 1);
@@ -461,4 +469,16 @@ void brake(int ldir, int rdir) {
   delay(150);
   moveR(0);
   moveL(0);
+}
+
+void amNotStuck() {
+  timeSinceLastUnstuck = millis();
+}
+
+bool isStuck() {
+  if (millis() > 5000 + timeSinceLastUnstuck) {
+    return true;
+  } else {
+    return false;
+  }
 }

@@ -191,6 +191,9 @@ void sim_go(int i) {
 }
 
 void go(int i) {
+  if (i < 0) {
+    i += 4;
+  }
   if (i != 0) {
     if (i == 1) {
       turn(90);
