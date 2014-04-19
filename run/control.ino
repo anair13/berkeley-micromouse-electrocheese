@@ -8,6 +8,10 @@ class State {
     float prevError;
     float integralError;
     
+    // Left sensor
+    float leftSensorFirst;
+    float rightSensorFirst;
+    
     State() {};
     
     void reset() {
@@ -18,6 +22,8 @@ class State {
       prevTime = millis();
       prevError = 0;
       integralError = 0;
+      leftSensorFirst = 0;
+      rightSensorFirst = 0;
     }
 };
 
@@ -150,6 +156,75 @@ void lightBlink() {
   delay(200);
 }
 
+void leftWheelStuck() {
+  moveL(leftVMotor(-1));
+  moveR(rightVMotor(-1.5));
+  delay(400);
+  moveL(0);
+  moveR(0);
+}
+
+void rightWheelStuck() {
+  moveL(leftVMotor(-1.5));
+  moveR(rightVMotor(-1));
+  delay(400);
+  moveL(0);
+  moveR(0);
+}
+
+void moveByLeftWall(class State* state) {
+  if (state->leftSensorFirst == 0) {
+    //state->leftSensorFirst = clamp(readSensorR(), 1.75, 1.78);
+    //state->leftSensorFirst = clamp(readSensorR(), 1.6, 1.8);
+    state->leftSensorFirst = 1.4;
+    //state->leftSensorFirst = readSensorR();
+  }
+  float al = readSensorR(); // larger voltage means smaller distance
+  float p = 1;
+  float i = 1;
+  float d = 0.2;
+  float error = al - state->leftSensorFirst; // range: ~ [-0.5 , 0.5]
+  // if error is positive, al > ar, dist(al) < dist(ar), closer to right
+  // turn left if error is positive
+  float timeElapsed = (millis() - state->prevTime) / 1000;
+  
+  float P = p * error;
+  float I = i * state->integralError;
+  float D = d * (error - state->prevError) / timeElapsed; // range 10
+  float PID = P + I + D;
+  moveL(leftVSensor(clamp(1 + PID, 0, 2)));
+  moveR(rightVSensor(clamp(1 - PID, 0, 2)));
+  
+  state->integralError += error * timeElapsed;
+  state->prevError = error;
+  state->prevTime = millis();
+}
+
+void moveByRightWall(class State* state) {
+  if (state->rightSensorFirst == 0) {
+    state->rightSensorFirst = clamp(readSensorL(), 1.5, 1.7);
+  }
+  float ar = readSensorL(); // larger voltage means smaller distance
+  float p = 1;
+  float i = 1;
+  float d = 0.2;
+  float error = ar - state->rightSensorFirst; // range: ~ [-0.5 , 0.5]
+  // if error is positive, al > ar, dist(al) < dist(ar), closer to right
+  // turn left if error is positive
+  float timeElapsed = (millis() - state->prevTime) / 1000;
+  
+  float P = p * error;
+  float I = i * state->integralError;
+  float D = d * (error - state->prevError) / timeElapsed; // range 10
+  float PID = P + I + D;
+  moveL(leftVSensor(clamp(1 - PID, 0, 2)));
+  moveR(rightVSensor(clamp(1 + PID, 0, 2)));
+  
+  state->integralError += error * timeElapsed;
+  state->prevError = error;
+  state->prevTime = millis();
+}
+
 bool moveF(float blocks) {
   int _counterL = 0;
   int _counterR = 0;
@@ -160,30 +235,40 @@ bool moveF(float blocks) {
   //while ((readTickCounterL(&_counterL) + readTickCounterR(&_counterR)) / 2 < TOTAL_TICKS) {
   const int MODE_SENSOR = 0;
   const int MODE_ENCODER = 1;
+  const int MODE_LEFT_SENSOR = 2;
+  const int MODE_RIGHT_SENSOR = 3;
   int mode = MODE_SENSOR;
   State state;
   state.reset();
   amNotStuck();
   lightOff();
-  float l = readSensorL();
-  float r = readSensorR();
-  if (isWallL() && isWallR() && abs(l - r) <= 1) {
-    if (mode != MODE_SENSOR) {
-      mode = MODE_SENSOR;
-      lightOn();
-      state.reset();
-    }
-  } else {
-    if (mode != MODE_ENCODER) {
-      mode = MODE_ENCODER;
-      state.reset();
-     lightOff();
-    }
-  }
+  const int SWITCH_INTERVAL = 2;
+  float prevLR = 0;
+  int stateUpdatedL = 0;
+  int stateUpdatedR = 0;
   while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
     switch (mode) {
       case MODE_SENSOR:
-        moveBySensors(&state);
+        //moveBySensors(&state);
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByRightWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
+      break;
+      case MODE_LEFT_SENSOR:
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByLeftWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
+      break;
+      case MODE_RIGHT_SENSOR:
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByRightWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
       break;
       case MODE_ENCODER:
         moveByEncoders(&state);
@@ -191,19 +276,61 @@ bool moveF(float blocks) {
     }
     int newStateL = getStateL();
     int newStateR = getStateR();
+    prevLR = (_counterL + _counterR) / 2;
+    stateUpdatedL++;
+    stateUpdatedR++;
     if (_stateL != newStateL) {
       _counterL += stateDelta(_stateL, newStateL);
       _stateL = newStateL;
+      stateUpdatedL = 0;
     }
     if (_stateR != newStateR) {
       _counterR += stateDelta(_stateR, newStateR);
       _stateR = newStateR;
+      stateUpdatedR = 0;
+    }
+    if (stateUpdatedL > 600) {
+      leftWheelStuck();
+    } else if (stateUpdatedR > 600) {
+      rightWheelStuck();
+    }
+    float LR = (_counterL + _counterR) / 2;
+    for (int i = 0; i < SWITCH_INTERVAL; ++i) {
+      float switchPoint = i * 1.0 / SWITCH_INTERVAL;
+      if (prevLR <= switchPoint && switchPoint < LR) {
+        float l = readSensorL();
+        float r = readSensorR();
+        if (isWallL() && isWallR() && abs(l - r) <= 0.8) {
+          if (mode != MODE_SENSOR) {
+            mode = MODE_SENSOR;
+            state.reset();
+          }
+        } else if (isWallL() && !isWallR()) {
+          if (mode != MODE_LEFT_SENSOR) {
+            mode = MODE_LEFT_SENSOR;
+            state.reset();
+          }
+        } else if (isWallR() && !isWallL()) {
+          if (mode != MODE_RIGHT_SENSOR) {
+            mode = MODE_RIGHT_SENSOR;
+            lightOn();
+            state.reset();
+          }
+        } else {
+          if (mode != MODE_ENCODER) {
+            mode = MODE_ENCODER;
+            lightOff();
+            state.reset();
+          }
+        }
+        break;
+      }
     }
     //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
     
     // Am I stuck?
     if (isStuck()) {
-      if (TOTAL_TICKS - ((_counterL + _counterR) / 2) < 100) {
+      if (TOTAL_TICKS - ((_counterL + _counterR) / 2) < 200) {
         //lol, we're not stuck!
         moveL(-1);
         moveR(-1);
@@ -216,7 +343,7 @@ bool moveF(float blocks) {
       lightOn();
       moveL(-1);
       moveR(-1);
-      delay(200 + stuckiness * 50);
+      delay(150 + stuckiness * 50);
       lightOff();
       moveL(0);
       moveR(0);
@@ -246,52 +373,6 @@ void turn(int deg) {
   float TOTAL_TICKS = (13.0 * abs(deg)) / 90;
   float prevTimeEncoders = millis();
   amNotStuck();
-  /*
-  while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
-    int newStateL = getStateL();
-    int newStateR = getStateR();
-    if (newStateL != stateL) {
-      //float inc = stateDelta(stateL, newStateL);
-      float inc = 1;
-      ticksL += inc;
-      totalTicksL += inc;
-      stateL = newStateL;
-    }
-    if (newStateR != stateR) {
-      //float inc = stateDelta(stateR, newStateR);
-      float inc = 1;
-      ticksR += inc;
-      totalTicksR += inc;
-      stateR = newStateR;
-    }
-    if (millis() - prevTimeEncoders >= SENSOR_PERIOD) {
-      ticksL *= TICK_COUNTER_L_FUDGE;
-      float error = (ticksL - ticksR) * 0.5 / SENSOR_PERIOD;
-      if (deg < 0) {
-        moveL(leftVMotor(clamp(-(1 - error), -2, 0)));
-        moveR(rightVMotor(clamp(1 + error, 0, 2)));
-      } else {
-        moveL(leftVMotor(clamp(1 - error, 0, 2)));
-        moveR(rightVMotor(clamp(-(1 + error), -2, 0)));
-      }
-    
-      ticksL = 0;
-      ticksR = 0;
-    
-      prevTimeEncoders = millis();
-    }
-    if (isStuck()) {
-      lightOn();
-      moveL(-1);
-      moveR(-1);
-      delay(200 + stuckiness * 50);
-      lightOff();
-      moveL(0);
-      moveR(0);
-      amNotStuck();
-    }
-  }
-  */
   if (deg < 0) {
     moveL(leftVMotor(-2));
     moveR(rightVMotor(2));
@@ -299,8 +380,8 @@ void turn(int deg) {
     moveL(leftVMotor(2));
     moveR(rightVMotor(-2));
   }
-  delay(abs(deg) * 2.5); // 7.38 V
-  //delay(abs(deg) * 2.3); // Full charge
+  //delay(abs(deg) * 2.5); // 7.38 V
+  delay(abs(deg) * 2.3); // Full charge
   amNotStuck();
   if (deg > 0) {
     brake(2, -2);
@@ -311,11 +392,11 @@ void turn(int deg) {
 }
 
 bool isWallL() {
-  return (readSensorL() > 1);
+  return (readSensorR() > 1.4);
 }
 
 bool isWallR() {
-  return (readSensorR() > 1);
+  return (readSensorL() > 1.4);
 }
 
 void moveByEncoders(class State* state) {
@@ -407,11 +488,13 @@ void turnBySensorAlreadyStraight() {
 }
 
 void turnBySensor(float dir) {
-  lightOn();
+  //lightOn();
   turnBySensor2(dir, 0.01);
 }
 
 void realign() { // assumes we are pointing at a wall
+  
+  /*
   float error = 5;
   while (abs(error) > 0.05) {
     error = readSensorL() - (1.1 * readSensorR());
@@ -426,6 +509,7 @@ void realign() { // assumes we are pointing at a wall
   }
   moveR(0);
   moveL(0);
+  */
 }
 
 void turnBySensor2(float dir, float threshold) { // positive for clockwise
@@ -602,7 +686,7 @@ void amNotStuck() {
 }
 
 bool isStuck() {
-  if (millis() > 2000 + timeSinceLastUnstuck) {
+  if (millis() > 1000 + timeSinceLastUnstuck) {
     return true;
   } else {
     return false;

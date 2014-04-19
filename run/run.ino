@@ -195,17 +195,60 @@ void go(int i) {
     i += 4;
   }
   if (i != 0) {
+    /*
+    const int BACK_SPD = -1;
+    const int BACK_DELAY = 100;
+    const int HALF_90 = 60;
+    */
     if (i == 1) {
+      /*
+      turn(HALF_90);
+      moveL(BACK_SPD);
+      moveR(BACK_SPD);
+      delay(BACK_DELAY);
+      moveL(0);
+      moveR(0);
+      turn(HALF_90);
+      */
       turn(90);
       //turnBySensor(1);
     }
     else if (i == 2) {
       turn(90);
-      turn(90);
+      /*
+      turn(HALF_90);
+      moveL(BACK_SPD);
+      moveR(BACK_SPD);
+      delay(BACK_DELAY);
+      moveL(0);
+      moveR(0);
+      turn(HALF_90);
+      moveL(BACK_SPD);
+      moveR(BACK_SPD);
+      delay(BACK_DELAY);
+      moveL(0);
+      moveR(0);
+      turn(HALF_90);
+      moveL(BACK_SPD);
+      moveR(BACK_SPD);
+      delay(BACK_DELAY);
+      moveL(0);
+      moveR(0);
+      turn(HALF_90);
+      */
     }
     else if (i == 3) {
-      turn(-90);
+      /*
+      turn(-HALF_90);
+      moveL(BACK_SPD);
+      moveR(BACK_SPD);
+      delay(BACK_DELAY);
+      moveL(0);
+      moveR(0);
+      turn(-HALF_90);
       //turnBySensor(-1);
+      */
+      turn(-90);
     }
     moveL(0);
     moveR(0);
@@ -219,14 +262,18 @@ void go(int i) {
       frontWall();
       lightOn();
       return;
-    }
-    else {
+    } else {
       lightOff();
     }
     if (moveF(1)) {
       r.x += X(r.t);
       r.y += Y(r.t);
       stuckiness = 0;
+      delay(100);
+      if (readSensorF() > 2.0) {
+        frontWall();
+        lightOn();
+      }
     } else {
       stuckiness++;
     }
@@ -274,6 +321,7 @@ void setup() {
   //}
   //realign();
   //turn(90);
+  //rightWheelStuck();
 }
 
 void loop() {
@@ -289,14 +337,13 @@ void loop() {
     int result = solve(r.x, r.y, dest_x, dest_y);
     if (result == -1) {
       lightBlink();
-      
-      initializeWalls();     
+      initializeWalls();  
+      solve(r.x, r.y, dest_x, dest_y);   
     }
     int dir = directions[0];
     go(dir - r.t);
     delay(500);
-  }
-  else {
+  } else {
     lightBlink();
   }
 }
