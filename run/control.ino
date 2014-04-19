@@ -21,6 +21,30 @@ class State {
     }
 };
 
+class SensorData {
+  private:
+    int i;
+  public:
+    float[5] data;
+    
+    SensorData() {
+      i = 0;
+    }
+    
+    float average() {
+      float avg = 0;
+      for (int i = 0; i < 5; i++) {
+        avg += data[i];
+      }
+      avg /= 5;
+    }
+    
+    void enqueue(float v) {
+      data[i] = v;
+      i = (i + 1) % 5;
+    }
+};
+
 /*
 2 : encoder L
 3 : bump B
@@ -329,8 +353,30 @@ float readSensorF() {
   // return analogRead(sensorF) * 5.0 / 1024;
 }
 
+void turnBySensorAlreadyStraight() {
+  turnBySensor(1);
+}
+
 void turnBySensor(float dir) {
+  lightOn();
   turnBySensor2(dir, 0.02);
+}
+
+void realign() { // assumes we are pointing at a wall
+  float error = 5;
+  while (abs(error) > 0.05) {
+    error = readSensorL() - (1.1 * readSensorR());
+    if (error > 0.1) {
+      moveR(-1);
+      moveL(1);
+    }
+    else if (error < 0.1) {
+      moveR(1);
+      moveL(-1);
+    }
+  }
+  moveR(0);
+  moveL(0);
 }
 
 void turnBySensor2(float dir, float threshold) { // positive for clockwise
@@ -343,6 +389,7 @@ void turnBySensor2(float dir, float threshold) { // positive for clockwise
   float f_prev = readSensorF();
   moveR(dir);
   moveL(-dir);
+  float derivDelta = 999999999;
   while (true) {
     delay(2);
     float f = readSensorF();
@@ -350,13 +397,19 @@ void turnBySensor2(float dir, float threshold) { // positive for clockwise
       break;
     }
     else {
-      f_prev = f;
+      if (abs(f - f_prev) > 0.1) {
+        break;
+      } else {
+        derivDelta = abs(f - f_prev);
+        f_prev = f;
+      }
     }
   }
   //brake(-dir, dir);
   moveR(0);
   moveL(0);
-  turnBySensor2(-dir, threshold / 2);
+  turnBySensor2(-dir, threshold * 0.9);
+  lightOff();
 }
 
 void moveBySensors(class State* state) {

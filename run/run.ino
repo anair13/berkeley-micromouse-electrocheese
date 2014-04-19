@@ -263,6 +263,7 @@ void setup() {
   //moveR(0);
   //while(true) {
   //}
+  realign();
 }
 
 void loop() {
@@ -274,10 +275,12 @@ void loop() {
   //moveL(0);
   //moveR(0);
   //delay(5000);
+  /*
   if (r.x != dest_x || r.y != dest_y) {
     solve(r.x, r.y, dest_x, dest_y);
     int dir = directions[0];
     go(dir - r.t);
     delay(500);
   }
+  */
 }
