@@ -197,14 +197,14 @@ void go(int i) {
   if (i != 0) {
     if (i == 1) {
       turn(90);
-      turnBySensor(1);
+      //turnBySensor(1);
     }
     else if (i == 2) {
       turn(180);
     }
     else if (i == 3) {
       turn(-90);
-      turnBySensor(-1);
+      //turnBySensor(-1);
     }
     moveL(0);
     moveR(0);
@@ -255,7 +255,7 @@ void setup() {
   //show_directions(d);
   //drive();
 
-  turnBySensor(1);
+  //turnBySensor(1);
   //delay(2000);
   //moveByEncoders();
   //delay(10);
@@ -264,6 +264,7 @@ void setup() {
   //while(true) {
   //}
   //realign();
+  //turn(90);
 }
 
 void loop() {
@@ -275,12 +276,13 @@ void loop() {
   //moveL(0);
   //moveR(0);
   //delay(5000);
-  /*
   if (r.x != dest_x || r.y != dest_y) {
     solve(r.x, r.y, dest_x, dest_y);
     int dir = directions[0];
     go(dir - r.t);
     delay(500);
   }
-  */
+  else {
+    lightBlink();
+  }
 }

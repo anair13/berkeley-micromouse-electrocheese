@@ -164,20 +164,23 @@ bool moveF(float blocks) {
   State state;
   state.reset();
   amNotStuck();
-  while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
-    float l = readSensorL();
-    float r = readSensorR();
-    if (isWallL() && isWallR() && abs(l - r) <= 1) {
-      if (mode != MODE_SENSOR) {
-        mode = MODE_SENSOR;
-        state.reset();
-      }
-    } else {
-      if (mode != MODE_ENCODER) {
-        mode = MODE_ENCODER;
-        state.reset();
-      }
+  lightOff();
+  float l = readSensorL();
+  float r = readSensorR();
+  if (isWallL() && isWallR() && abs(l - r) <= 1) {
+    if (mode != MODE_SENSOR) {
+      mode = MODE_SENSOR;
+      lightOn();
+      state.reset();
     }
+  } else {
+    if (mode != MODE_ENCODER) {
+      mode = MODE_ENCODER;
+      state.reset();
+     lightOff();
+    }
+  }
+  while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
     switch (mode) {
       case MODE_SENSOR:
         moveBySensors(&state);
@@ -213,6 +216,7 @@ bool moveF(float blocks) {
     
     delay(1);
   }
+  lightOff();
   amNotStuck();
   moveL(0);
   moveR(0);
@@ -233,6 +237,7 @@ void turn(int deg) {
   float TOTAL_TICKS = (13.0 * abs(deg)) / 90;
   float prevTimeEncoders = millis();
   amNotStuck();
+  /*
   while(totalTicksL < TOTAL_TICKS && totalTicksR < TOTAL_TICKS) {
     int newStateL = getStateL();
     int newStateR = getStateR();
@@ -277,12 +282,21 @@ void turn(int deg) {
       amNotStuck();
     }
   }
+  */
+  if (deg < 0) {
+    moveL(leftVMotor(-2));
+    moveR(rightVMotor(2));
+  } else {
+    moveL(leftVMotor(2));
+    moveR(rightVMotor(-2));
+  }
+  delay(abs(deg) * 2.5);
   amNotStuck();
   if (deg > 0) {
-    brake(-1, 1);
+    brake(2, -2);
   }
   if (deg < 0) {
-    brake(1, -1);
+    brake(-2, 2);
   }
 }
 
@@ -384,7 +398,7 @@ void turnBySensorAlreadyStraight() {
 
 void turnBySensor(float dir) {
   lightOn();
-  turnBySensor2(dir, 0.001);
+  turnBySensor2(dir, 0.01);
 }
 
 void realign() { // assumes we are pointing at a wall
@@ -417,7 +431,7 @@ void turnBySensor2(float dir, float threshold) { // positive for clockwise
   float old_stddev = 0;
   SensorData sensorData(0);
   while (true) {
-    //delay(2);
+    delay(20);
     float f = readSensorF();
     sensorData.enqueue(f);
     if (sensorData.points >= sensorData.SIZE) {
@@ -433,7 +447,7 @@ void turnBySensor2(float dir, float threshold) { // positive for clockwise
   //brake(-dir, dir);
   moveR(0);
   moveL(0);
-  turnBySensor2(-dir, threshold * 0.9);
+  turnBySensor2(-dir * 0.9, threshold * 0.5);
 }
 
 void moveBySensors(class State* state) {
@@ -568,7 +582,7 @@ int stateDelta(int from, int to) {
 void brake(int ldir, int rdir) {
   moveL(leftVMotor(-ldir));
   moveR(rightVMotor(-rdir));
-  delay(150);
+  delay(100);
   moveR(0);
   moveL(0);
 }
