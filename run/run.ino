@@ -191,6 +191,9 @@ void sim_go(int i) {
 }
 
 void go(int i) {
+  if (i < 0) {
+    i += 4;
+  }
   if (i != 0) {
     if (i == 1) {
       turn(90);
@@ -203,8 +206,12 @@ void go(int i) {
     }
     moveL(0);
     moveR(0);
-    r.t = (r.t + i) % 4;
-    delay(500);
+    r.t = r.t + i;
+    if (r.t < 0) {
+      r.t += 4;
+    }
+    r.t = r.t % 4;    
+  } else {
     if (readSensorF() > 2.0) {
       frontWall();
       lightOn();
@@ -213,10 +220,10 @@ void go(int i) {
     else {
       lightOff();
     }
+    moveF(1);
+    r.x += X(r.t);
+    r.y += Y(r.t);
   }
-  moveF(1);
-  r.x += X(r.t);
-  r.y += Y(r.t);
 }
 
 void setup() {
@@ -266,12 +273,5 @@ void loop() {
     int dir = directions[0];
     go(dir - r.t);
     delay(500);
-    if (readSensorF() > 2.0) {
-      frontWall();
-      lightOn();
-    }
-    else {
-      lightOff();
-    }
   }
 }
