@@ -100,7 +100,9 @@ void moveF(float blocks) {
   State state;
   state.reset();
   while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
-    if (isWallL() && isWallR()) {
+    float l = readSensorL();
+    float r = readSensorR();
+    if (isWallL() && isWallR() && abs(l - r) <= 0.5) {
       if (mode != MODE_SENSOR) {
         mode = MODE_SENSOR;
         state.reset();
