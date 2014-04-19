@@ -68,6 +68,7 @@ int targetR = 0;
 
 // Am I stuck?  Dear god I hope I'm not stuck...
 float timeSinceLastUnstuck = millis();
+int stuckiness = 0;
 
 int ticksL;
 int ticksR;
@@ -100,7 +101,7 @@ void lightOff() {
   digitalWrite(led, LOW);
 }
 
-void moveF(float blocks) {
+bool moveF(float blocks) {
   int _counterL = 0;
   int _counterR = 0;
   int _stateL = 0;
@@ -153,11 +154,12 @@ void moveF(float blocks) {
       lightOn();
       moveL(-1);
       moveR(-1);
-      delay(400);
+      delay(200 + stuckiness * 50);
       lightOff();
       moveL(0);
       moveR(0);
       amNotStuck();
+      return false;
     }
     
     delay(1);
@@ -166,6 +168,7 @@ void moveF(float blocks) {
   moveL(0);
   moveR(0);
   brake(1, 1);
+  return true;
 }
 
 //void crashRecovery()
@@ -218,7 +221,7 @@ void turn(int deg) {
       lightOn();
       moveL(-1);
       moveR(-1);
-      delay(400);
+      delay(200 + stuckiness * 50);
       lightOff();
       moveL(0);
       moveR(0);

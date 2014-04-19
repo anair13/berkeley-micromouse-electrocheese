@@ -197,12 +197,14 @@ void go(int i) {
   if (i != 0) {
     if (i == 1) {
       turn(90);
+      turnBySensor(1);
     }
     else if (i == 2) {
       turn(180);
     }
     else if (i == 3) {
       turn(-90);
+      turnBySensor(-1);
     }
     moveL(0);
     moveR(0);
@@ -220,9 +222,13 @@ void go(int i) {
     else {
       lightOff();
     }
-    moveF(1);
-    r.x += X(r.t);
-    r.y += Y(r.t);
+    if (moveF(1)) {
+      r.x += X(r.t);
+      r.y += Y(r.t);
+      stuckiness = 0;
+    } else {
+      stuckiness++;
+    }
   }
 }
 
