@@ -200,7 +200,8 @@ void go(int i) {
       //turnBySensor(1);
     }
     else if (i == 2) {
-      turn(180);
+      turn(90);
+      turn(90);
     }
     else if (i == 3) {
       turn(-90);
@@ -232,20 +233,28 @@ void go(int i) {
   }
 }
 
+void initializeWalls() {
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      wall[i][j] = 0;
+    }
+  }
+  for (int i = 0; i < 3; i++) {
+    setWall(5, i, 1); // right wall
+    setWall(0, i, 3); // left wall
+  }
+  for (int i = 0; i < 6; i++) {
+    setWall(i, 0, 0); // top wall
+    setWall(i, 2, 2); // bottom wall
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   setup_control();
   //turn(90);
 
-  for (int i = 0; i < 3; i++) {
-    setWall(5, i, 1); // right wall
-    setWall(0, i, 3); // left wall
-  }
-  
-  for (int i = 0; i < 6; i++) {
-    setWall(i, 0, 0); // top wall
-    setWall(i, 2, 2); // bottom wall
-  }
+  initializeWalls();
 
   //for (int i = 0; i < 10; i++) {
   //  setWall(i, 7, 0);
@@ -277,7 +286,12 @@ void loop() {
   //moveR(0);
   //delay(5000);
   if (r.x != dest_x || r.y != dest_y) {
-    solve(r.x, r.y, dest_x, dest_y);
+    int result = solve(r.x, r.y, dest_x, dest_y);
+    if (result == -1) {
+      lightBlink();
+      
+      initializeWalls();     
+    }
     int dir = directions[0];
     go(dir - r.t);
     delay(500);

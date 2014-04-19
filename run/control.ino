@@ -203,6 +203,16 @@ bool moveF(float blocks) {
     
     // Am I stuck?
     if (isStuck()) {
+      if (TOTAL_TICKS - ((_counterL + _counterR) / 2) < 100) {
+        //lol, we're not stuck!
+        moveL(-1);
+        moveR(-1);
+        delay(200);
+        moveL(0);
+        moveR(0);
+        amNotStuck();
+        break;
+      }
       lightOn();
       moveL(-1);
       moveR(-1);
@@ -213,7 +223,6 @@ bool moveF(float blocks) {
       amNotStuck();
       return false;
     }
-    
     delay(1);
   }
   lightOff();
@@ -290,7 +299,8 @@ void turn(int deg) {
     moveL(leftVMotor(2));
     moveR(rightVMotor(-2));
   }
-  delay(abs(deg) * 2.5);
+  delay(abs(deg) * 2.5); // 7.38 V
+  //delay(abs(deg) * 2.3); // Full charge
   amNotStuck();
   if (deg > 0) {
     brake(2, -2);
