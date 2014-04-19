@@ -156,6 +156,13 @@ void lightBlink() {
   delay(200);
 }
 
+void lightBlink2() {
+  lightOn();
+  delay(1000);
+  lightOff();
+  delay(1000);
+}
+
 void leftWheelStuck() {
   moveL(leftVMotor(-1));
   moveR(rightVMotor(-1.5));
@@ -176,7 +183,7 @@ void moveByLeftWall(class State* state) {
   if (state->leftSensorFirst == 0) {
     //state->leftSensorFirst = clamp(readSensorR(), 1.75, 1.78);
     //state->leftSensorFirst = clamp(readSensorR(), 1.6, 1.8);
-    state->leftSensorFirst = 1.4;
+    state->leftSensorFirst = 1.2;
     //state->leftSensorFirst = readSensorR();
   }
   float al = readSensorR(); // larger voltage means smaller distance
@@ -247,33 +254,6 @@ bool moveF(float blocks) {
   int stateUpdatedL = 0;
   int stateUpdatedR = 0;
   while ((_counterL + _counterR) / 2 < TOTAL_TICKS) {
-    switch (mode) {
-      case MODE_SENSOR:
-        //moveBySensors(&state);
-        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
-          moveByRightWall(&state);
-        } else {
-          moveByEncoders(&state);
-        }
-      break;
-      case MODE_LEFT_SENSOR:
-        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
-          moveByLeftWall(&state);
-        } else {
-          moveByEncoders(&state);
-        }
-      break;
-      case MODE_RIGHT_SENSOR:
-        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
-          moveByRightWall(&state);
-        } else {
-          moveByEncoders(&state);
-        }
-      break;
-      case MODE_ENCODER:
-        moveByEncoders(&state);
-      break;
-    }
     int newStateL = getStateL();
     int newStateR = getStateR();
     prevLR = (_counterL + _counterR) / 2;
@@ -289,11 +269,13 @@ bool moveF(float blocks) {
       _stateR = newStateR;
       stateUpdatedR = 0;
     }
+    /*
     if (stateUpdatedL > 600) {
       leftWheelStuck();
     } else if (stateUpdatedR > 600) {
       rightWheelStuck();
     }
+    */
     float LR = (_counterL + _counterR) / 2;
     for (int i = 0; i < SWITCH_INTERVAL; ++i) {
       float switchPoint = i * 1.0 / SWITCH_INTERVAL;
@@ -325,6 +307,33 @@ bool moveF(float blocks) {
         }
         break;
       }
+    }
+    switch (mode) {
+      case MODE_SENSOR:
+        //moveBySensors(&state);
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByRightWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
+      break;
+      case MODE_LEFT_SENSOR:
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByLeftWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
+      break;
+      case MODE_RIGHT_SENSOR:
+        if (((_counterL + _counterR) / (2.0 * TOTAL_TICKS)) < 0.8) { // encoders for final run if front wall exists
+          moveByRightWall(&state);
+        } else {
+          moveByEncoders(&state);
+        }
+      break;
+      case MODE_ENCODER:
+        moveByEncoders(&state);
+      break;
     }
     //updateTickCounters(&_counterL, &_counterR, &_stateL, &_stateR);
     
@@ -380,8 +389,8 @@ void turn(int deg) {
     moveL(leftVMotor(2));
     moveR(rightVMotor(-2));
   }
-  //delay(abs(deg) * 2.5); // 7.38 V
-  delay(abs(deg) * 2.3); // Full charge
+  delay(abs(deg) * 2.5); // 7.38 V
+  //delay(abs(deg) * 2.3); // Full charge
   amNotStuck();
   if (deg > 0) {
     brake(2, -2);
