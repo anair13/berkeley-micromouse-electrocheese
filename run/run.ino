@@ -12,8 +12,8 @@ class Robot {
 };
 
 Robot r(0, 0, 1);
-int dest_x = 5;
-int dest_y = 2;
+int dest_x = 7;
+int dest_y = 7;
 
 // Utility conversion functions
 int X(int dir) { // x direction dir points in
@@ -118,10 +118,12 @@ int get_directions(int x, int y) {
 
 void setWall(int x, int y, int t) {
   wall[y][x] += (8 >> t);
+  Serial.print("adding "); Serial.print(wall[y][x]); Serial.print(" to "); Serial.print(x); Serial.print(","); Serial.println(y);
   int ox = x + X(t);
   int oy = y + Y(t);
   if (ox >= 0 && ox < 16 && oy >= 0 && oy < 16) {
     wall[oy][ox] += (8 >> O(t));
+    Serial.print("adding "); Serial.print(wall[oy][ox]); Serial.print(" to "); Serial.print(ox); Serial.print(","); Serial.println(oy);
   }
 }
 
@@ -142,6 +144,13 @@ void show_grids() {
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 16; j++) {
       Serial.print(grid[i][j]);
+    }
+    Serial.println();
+  }
+  Serial.println("wall:");
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      Serial.print(wall[i][j]);
     }
     Serial.println();
   }
@@ -199,7 +208,8 @@ void go(int i) {
       turn(90);
     }
     else if (i == 2) {
-      turn(180);
+      turn(90);
+      turn(90);
     }
     else if (i == 3) {
       turn(-90);
@@ -216,13 +226,49 @@ void go(int i) {
       frontWall();
       lightOn();
       return;
-    }
-    else {
+    } else {
       lightOff();
     }
-    moveF(1);
-    r.x += X(r.t);
-    r.y += Y(r.t);
+    if (moveF(1)) {
+      r.x += X(r.t);
+      if (r.x < 0) {
+        r.x = 0;
+      }
+      if (r.x > 15) {
+        r.x = 15;
+      }
+      r.y += Y(r.t);
+      if (r.y < 0) {
+        r.y = 0;
+      }
+      if (r.y > 15) {
+        r.y = 15;
+      }
+      stuckiness = 0;
+      delay(100);
+      if (readSensorF() > 2.0) {
+        frontWall();
+        lightOn();
+      }
+    } else {
+      stuckiness++;
+    }
+  }
+}
+
+void initializeWalls() {
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 16; j++) {
+      wall[i][j] = 0;
+    }
+  }
+  for (int i = 0; i < 16; i++) {
+    setWall(15, i, 1); // right wall
+    setWall(0, i, 3); // left wall
+  }
+  for (int i = 0; i < 16; i++) {
+    setWall(i, 0, 0); // top wall
+    setWall(i, 15, 2); // bottom wall
   }
 }
 
@@ -231,47 +277,34 @@ void setup() {
   setup_control();
   //turn(90);
 
-  for (int i = 0; i < 3; i++) {
-    setWall(5, i, 1); // right wall
-    setWall(0, i, 3); // left wall
-  }
+  initializeWalls();
   
-  for (int i = 0; i < 6; i++) {
-    setWall(i, 0, 0); // top wall
-    setWall(i, 2, 2); // bottom wall
-  }
-
-  //for (int i = 0; i < 10; i++) {
-  //  setWall(i, 7, 0);
-  //}
-
-  //int d = solve(0, 0, 2, 2);
-  //show_directions(d);
-  //drive();
-
-  //turnBySensor(1);
-  //delay(2000);
-  //moveByEncoders();
-  //delay(10);
-  //moveL(0);
-  //moveR(0);
-  //while(true) {
-  //}
+  show_grids();
 }
 
 void loop() {
-  //moveF(2);
-  //moveL(0);
-  //moveR(0);
-  //delay(5000);
-  //turn(-60);
-  //moveL(0);
-  //moveR(0);
-  //delay(5000);
   if (r.x != dest_x || r.y != dest_y) {
-    solve(r.x, r.y, dest_x, dest_y);
-    int dir = directions[0];
-    go(dir - r.t);
-    delay(500);
+    int result = solve(r.x, r.y, dest_x, dest_y);
+    if (result == -1) {
+      lightBlink();
+      initializeWalls();
+      solve(r.x, r.y, dest_x, dest_y);
+      Serial.println(r.x);
+      Serial.println(r.y);
+    }
+    else {
+      int dir = directions[0];
+      go(dir - r.t);
+      delay(100);
+    }
+  } else {
+    if (dest_x == 7 && dest_y == 7) {
+      dest_x = 0;
+      dest_y = 0;
+    } else {
+      dest_x = 7;
+      dest_y = 7;
+    }
+    lightBlink2();
   }
 }
